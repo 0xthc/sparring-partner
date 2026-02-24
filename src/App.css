@@ -865,3 +865,41 @@ tbody tr:last-child td {
   justify-content: center;
   margin-top: 1px;
 }
+
+/* Time + date column */
+.terrain-date-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 44px;
+}
+.terrain-time {
+  font-size: 10px;
+  color: #888;
+  font-weight: 500;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+/* Host badge */
+.terrain-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.terrain-host-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a1a1a;
+  background: #efefed;
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+.terrain-location {
+  font-size: 11px;
+  color: #999;
+}

@@ -16,13 +16,28 @@ CUTOFF = (datetime.now(PST) + timedelta(days=90)).strftime("%Y-%m-%d")
 def utc_to_pst_date(utc_str: str) -> str:
     """Convert a UTC ISO timestamp to PST date string."""
     try:
-        # Handle formats: 2026-02-25T03:00:00Z or 2026-02-25T03:00:00+00:00
         utc_str = utc_str.replace('Z', '+00:00')
         dt_utc = datetime.fromisoformat(utc_str)
         dt_pst = dt_utc.astimezone(PST)
         return dt_pst.strftime("%Y-%m-%d")
     except Exception:
-        return utc_str[:10]  # fallback to raw date
+        return utc_str[:10]
+
+def utc_to_pst_time(utc_str: str) -> str:
+    """Convert a UTC ISO timestamp to PST time string like '7:30 PM'."""
+    try:
+        utc_str = utc_str.replace('Z', '+00:00')
+        dt_utc = datetime.fromisoformat(utc_str)
+        dt_pst = dt_utc.astimezone(PST)
+        return dt_pst.strftime("%-I:%M %p")
+    except Exception:
+        return ""
+
+def with_time(location: str, time_str: str) -> str:
+    """Prepend time to location as 'H:MM PM • Location'."""
+    if time_str:
+        return f"{time_str} • {location}"
+    return location
 
 HEADERS_SB = {
     "apikey": SUPABASE_KEY,
@@ -90,8 +105,10 @@ def scrape_luma_calendar(host, slug, event_type):
         location = geo.get("full_address") or geo.get("city_state") or "San Francisco, CA"
         if "san francisco" not in location.lower() and "sf" not in location.lower() and "bay area" not in location.lower():
             continue
+        time_str = utc_to_pst_time(start) if start else ""
         insert_event({
-            "name": name, "date": date_str, "location": location,
+            "name": name, "date": date_str,
+            "location": with_time(location, time_str),
             "host": host, "type": event_type, "status": "Maybe",
             "source": "luma", "source_url": f"https://lu.ma/{ev.get('url', slug)}"
         })
@@ -114,9 +131,11 @@ def scrape_luma_search():
             full_addr = (geo.get("full_address") or geo.get("city_state") or "").lower()
             if not any(k in full_addr for k in ["san francisco", "sf,", "bay area", "soma", "mission"]):
                 continue
+            time_str = utc_to_pst_time(start) if start else ""
+            raw_loc = geo.get("full_address") or "San Francisco, CA"
             insert_event({
                 "name": name, "date": date_str,
-                "location": geo.get("full_address") or "San Francisco, CA",
+                "location": with_time(raw_loc, time_str),
                 "host": (ev.get("hosts") or [{}])[0].get("name", ""),
                 "type": "Community", "status": "Maybe",
                 "source": "luma", "source_url": f"https://lu.ma/{ev.get('url', '')}"

@@ -40,6 +40,7 @@ const initialForm = {
 const initialEventForm = {
   name: '',
   date: '',
+  time: '',
   location: '',
   host: '',
   type: 'Conference',
@@ -224,7 +225,9 @@ function TerrainTab() {
     const payload = {
       name: eventForm.name.trim(),
       date: eventForm.date || null,
-      location: eventForm.location.trim() || null,
+      location: eventForm.time.trim()
+        ? `${eventForm.time.trim()} • ${eventForm.location.trim() || 'San Francisco, CA'}`
+        : eventForm.location.trim() || null,
       host: eventForm.host.trim() || null,
       type: eventForm.type || null,
       status: eventForm.status || 'Maybe',
@@ -434,6 +437,88 @@ function TerrainTab() {
 
 const PRECOGNITION_API = 'https://yc-scout.onrender.com'
 
+const HOST_INTEL = {
+  'forerunner': {
+    gp: 'Kirsten Green',
+    focus: 'consumer, brand, commerce, next-gen retail',
+    stage: 'Series A–B',
+    angle: 'Forerunner backs brands that shift how people live — they care deeply about cultural timing and consumer psychology, not just unit economics.',
+    hook: 'Lead with consumer behavior shifts, not TAM. Kirsten Green thinks in waves of taste, not market maps.',
+  },
+  'hustle fund': {
+    gp: 'Elizabeth Yin',
+    focus: 'pre-seed, B2B SaaS, founder velocity',
+    stage: 'pre-seed / seed',
+    angle: 'Hustle Fund moves fast and bets on hustle over pedigree. Elizabeth Yin is vocal about founder speed as signal.',
+    hook: 'Lead with speed of execution and scrappy early traction. They fund founders who move faster than the market.',
+  },
+  'precursor': {
+    gp: 'Charles Hudson',
+    focus: 'pre-product pre-seed, underrepresented founders',
+    stage: 'pre-seed',
+    angle: 'Precursor is the most pre-conviction fund in SF — they fund ideas and people before there is a product.',
+    hook: 'Lead with your thesis on a space, not a deck. Charles values thinking over traction at this stage.',
+  },
+  'south park commons': {
+    gp: 'Ruchi Sanghvi / community',
+    focus: 'technical founders, deep exploration, pre-idea',
+    stage: 'community / pre-company',
+    angle: 'SPC is a founder community, not a traditional VC. Members explore ideas together before committing to a company.',
+    hook: 'Come with intellectual curiosity and a problem you are obsessing over, not a polished pitch.',
+  },
+  'a16z': {
+    gp: 'Marc Andreessen / various',
+    focus: 'AI, crypto, bio, consumer, fintech',
+    stage: 'seed through growth',
+    angle: 'a16z operates at scale — they are looking for category-defining companies, not incremental improvements.',
+    hook: 'Lead with why this is a platform shift, not a product. They want to back the next computing paradigm.',
+  },
+  'collaborative fund': {
+    gp: 'Craig Shapiro',
+    focus: 'impact, consumer, climate, future of work',
+    stage: 'seed–Series A',
+    angle: 'Collaborative Fund backs companies where doing good and doing well are the same thing.',
+    hook: 'Frame the mission as the moat. They believe purpose-driven brands have structural defensibility.',
+  },
+  'first round': {
+    gp: 'Josh Kopelman',
+    focus: 'B2B SaaS, marketplace, consumer tech',
+    stage: 'seed',
+    angle: 'First Round is the gold standard seed fund — known for deep founder support and their Review content platform.',
+    hook: 'Show you have done the work on your category. First Round loves founders who think like writers and researchers.',
+  },
+  'imaginary': {
+    gp: 'Natalie Massenet',
+    focus: 'luxury, fashion, consumer, culture',
+    stage: 'seed–Series A',
+    angle: 'Imaginary Ventures is the EU-to-US taste bridge. Natalie Massenet built Net-a-Porter — she patterns matches on category-defining consumer brands.',
+    hook: 'Lead with your EU consumer lens as a predictor of US trends. That is your edge with her.',
+  },
+  'dbl partners': {
+    gp: 'Nancy Pfund',
+    focus: 'impact, climate, healthcare, education',
+    stage: 'seed–growth',
+    angle: 'DBL pioneered impact + returns investing. They backed Tesla, Revolution Foods, the model for mission-driven growth.',
+    hook: 'Show the impact thesis is load-bearing for the business model, not a values add-on.',
+  },
+  'y combinator': {
+    gp: 'Garry Tan',
+    focus: 'all sectors, global, technical founders',
+    stage: 'pre-seed',
+    angle: 'YC is the highest signal accelerator in the world. W26 batch will surface the best early-stage companies of the year.',
+    hook: 'Demo Days are about spotting the one company others will miss. Come with a sector thesis, not a FOMO mindset.',
+  },
+}
+
+function getHostIntel(hostName) {
+  if (!hostName) return null
+  const lower = hostName.toLowerCase()
+  for (const [key, intel] of Object.entries(HOST_INTEL)) {
+    if (lower.includes(key)) return intel
+  }
+  return null
+}
+
 async function fetchEventBrief(eventName, eventHost) {
   try {
     const [themesRes, breaksRes, statsRes] = await Promise.all([
@@ -477,34 +562,37 @@ async function fetchEventBrief(eventName, eventHost) {
     // ── Breaks signal (recent inflections) ───────────────────
     const recentBreaks = (breaks || []).slice(0, 2)
 
-    // ── Build 5-point brief ───────────────────────────────────
+    // ── Host intel ────────────────────────────────────────────
+    const hostIntel = getHostIntel(eventHost)
+
+    // ── Build brief ───────────────────────────────────────────
     const points = []
 
-    // Point 1 — top pattern
+    // Point 1 — host context (if known)
+    if (hostIntel) {
+      points.push(`Host: ${eventHost}${hostIntel.gp ? ` (${hostIntel.gp})` : ''} — ${hostIntel.angle} ${hostIntel.hook}`)
+    }
+
+    // Point 2 — top pattern (filtered for host focus if possible)
     if (displayThemes[0]) {
-      points.push(`Pattern: "${displayThemes[0].name}" is the sharpest cluster this week — ${displayThemes[0].builderCount} founders building independently in the same direction. Early signal, not yet visible in press.`)
+      points.push(`Pattern: "${displayThemes[0].name}" is the sharpest cluster this week — ${displayThemes[0].builderCount} founders converging independently. Early signal, not yet visible in press.`)
     }
 
-    // Point 2 — flow: hottest sector
+    // Point 3 — flow: hottest sector
     if (hotSector) {
-      points.push(`Flow: ${hotSector[0]} is the hottest sector by founder activity right now — ${hotSector[1].founders} founders across ${hotSector[1].count} clusters. Capital tends to follow 3–6 months after this kind of founder density.`)
+      points.push(`Flow: ${hotSector[0]} is the most active sector right now — ${hotSector[1].founders} founders across ${hotSector[1].count} clusters. Capital follows founder density by 3–6 months.`)
     }
 
-    // Point 3 — flow: rising or unusual sector
+    // Point 4 — flow second wave or second pattern
     if (risingSector && risingSector[0] !== hotSector?.[0]) {
-      points.push(`Flow: ${risingSector[0]} is accelerating fast as a second wave — ${risingSector[1].founders} founders, ${risingSector[1].count} distinct clusters. Worth watching as a contrarian signal.`)
+      points.push(`Flow: ${risingSector[0]} is accelerating as a second wave — ${risingSector[1].founders} founders, ${risingSector[1].count} distinct clusters. Contrarian signal worth naming.`)
     } else if (displayThemes[1]) {
-      points.push(`Pattern: "${displayThemes[1].name}" — ${displayThemes[1].builderCount} founders, early momentum. A second data point on where builders are concentrating before market visibility.`)
+      points.push(`Pattern: "${displayThemes[1].name}" — ${displayThemes[1].builderCount} founders. Second data point on where builders are concentrating before market visibility.`)
     }
 
-    // Point 4 — break/inflection
+    // Point 5 — break/inflection
     if (recentBreaks[0]) {
-      points.push(`Break: ${recentBreaks[0].signal || 'A founder in the dataset just crossed a key momentum threshold this week'} — the kind of early inflection Precognition is built to catch before it's public.`)
-    }
-
-    // Point 5 — meta credibility
-    if (stats?.total) {
-      points.push(`Scale: Precognition is currently tracking ${stats.total} founders across ${themes.length} emerging clusters. ${stats.strong || 0} have strong signal scores — that's the shortlist.`)
+      points.push(`Break: ${recentBreaks[0].signal || 'A founder in the dataset just crossed a momentum threshold this week'} — the type of pre-visibility signal Precognition surfaces before it hits press.`)
     }
 
     return points.slice(0, 4)
@@ -549,14 +637,28 @@ function TerrainEventCard({
   return (
     <article className="terrain-card">
       <button className="terrain-main" onClick={onToggleExpanded} type="button">
-        <div className="terrain-date">{formatTerrainDate(event.date)}</div>
+        <div className="terrain-date-col">
+          <div className="terrain-date">{formatTerrainDate(event.date)}</div>
+          {(() => {
+            const parts = (event.location || '').split(' • ')
+            const time = parts.length > 1 ? parts[0] : null
+            return time ? <div className="terrain-time">{time}</div> : null
+          })()}
+        </div>
         <div className="terrain-main-center">
           <div className="terrain-title-row">
             <strong>{event.name || 'Untitled event'}</strong>
             <span className={`event-type-badge ${eventTypeClass(event.type)}`}>{event.type || 'Other'}</span>
           </div>
-          <p>{event.host || 'Host not listed'}</p>
-          <small>{event.location || 'Location TBD'}</small>
+          <div className="terrain-meta-row">
+            {event.host && <span className="terrain-host-badge">{event.host}</span>}
+            <small className="terrain-location">
+              {(() => {
+                const parts = (event.location || '').split(' • ')
+                return parts.length > 1 ? parts.slice(1).join(' • ') : parts[0] || 'Location TBD'
+              })()}
+            </small>
+          </div>
           {event.source_url && (
             <a
               href={event.source_url}
@@ -690,6 +792,15 @@ function AddEventModal({ form, onCancel, onChange, onSave }) {
                 type="date"
                 value={form.date}
                 onChange={(event) => onChange((prev) => ({ ...prev, date: event.target.value }))}
+              />
+            </label>
+            <label>
+              Time (e.g. 7:00 PM)
+              <input
+                type="text"
+                placeholder="7:00 PM"
+                value={form.time}
+                onChange={(event) => onChange((prev) => ({ ...prev, time: event.target.value }))}
               />
             </label>
             <label>
