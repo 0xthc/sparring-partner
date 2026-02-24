@@ -474,6 +474,17 @@ function TerrainEventCard({
           </div>
           <p>{event.host || 'Host not listed'}</p>
           <small>{event.location || 'Location TBD'}</small>
+          {event.source_url && (
+            <a
+              href={event.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              style={{ fontSize: 11, color: '#2050a0', textDecoration: 'none', marginTop: 4, display: 'inline-block' }}
+            >
+              RSVP / View event →
+            </a>
+          )}
         </div>
       </button>
 
