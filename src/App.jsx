@@ -613,7 +613,15 @@ async function fetchEventBrief(eventName, eventHost) {
     // ── Check if Precognition has domain-relevant themes ──────
     const hostTopics = hostIntel?.topics || []
     const relevantThemes = hostTopics.length > 0
-      ? topThemes.filter(t => hostTopics.some(topic => t.name.toLowerCase().includes(topic) || (t.sector || '').toLowerCase().includes(topic)))
+      ? topThemes.filter(t => {
+          const name = t.name.toLowerCase()
+          // Must match on the theme NAME (not sector) with a whole-word-ish check
+          // and must have enough founders to be a real signal
+          return t.builderCount >= 6 && hostTopics.some(topic => {
+            const re = new RegExp(`\\b${topic}`, 'i')
+            return re.test(name)
+          })
+        })
       : displayThemes
     const hasDomainSignal = relevantThemes.length >= 2
 
