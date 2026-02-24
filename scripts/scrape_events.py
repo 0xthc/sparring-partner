@@ -1,175 +1,118 @@
 """
 Event scraper for Terrain tab.
-Scrapes SF VC events from Luma, Eventbrite, South Park Commons, a16z, First Round.
+Targets specific SF VC organizer Luma pages + SPC + a16z.
 Saves to Supabase events table.
 Run daily via GitHub Actions.
 """
-
-import os
-import httpx
-import json
+import os, json, urllib.request, urllib.parse, urllib.error
 from datetime import datetime, timedelta
 
-SUPABASE_URL = os.environ["VITE_SUPABASE_URL"]
-SUPABASE_KEY = os.environ["VITE_SUPABASE_ANON_KEY"]
+SUPABASE_URL = os.environ.get("VITE_SUPABASE_URL", "https://datqjbnetudvqjsxjczl.supabase.co")
+SUPABASE_KEY = os.environ.get("VITE_SUPABASE_ANON_KEY", "")
+TODAY = datetime.now().strftime("%Y-%m-%d")
+CUTOFF = (datetime.now() + timedelta(days=90)).strftime("%Y-%m-%d")
 
-headers = {
+HEADERS_SB = {
     "apikey": SUPABASE_KEY,
     "Authorization": f"Bearer {SUPABASE_KEY}",
     "Content-Type": "application/json",
     "Prefer": "return=minimal"
 }
 
+# SF VC organizers on Luma — their calendar slugs
+LUMA_CALENDARS = [
+    ("South Park Commons", "southparkcommons", "Community"),
+    ("Hustle Fund", "hustlefund", "Dinner"),
+    ("First Round Capital", "firstround", "Demo Day"),
+    ("Village Global", "villageglobal", "Community"),
+    ("Precursor Ventures", "precursor", "Community"),
+]
 
-def upsert_event(event: dict):
-    """Insert event if not already exists (match by name + date)."""
-    # Check if exists
-    check = httpx.get(
-        f"{SUPABASE_URL}/rest/v1/events",
-        headers=headers,
-        params={"name": f"eq.{event['name']}", "date": f"eq.{event['date']}", "select": "id"}
-    )
-    if check.json():
-        return  # already exists
-
-    httpx.post(f"{SUPABASE_URL}/rest/v1/events", headers=headers, json=event)
-    print(f"Added: {event['name']} on {event['date']}")
-
-
-def scrape_luma():
-    """Scrape Luma SF VC/startup events via their discover API."""
+def fetch_url(url, headers=None):
+    req = urllib.request.Request(url, headers=headers or {"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
     try:
-        # Luma public discover endpoint for SF
-        resp = httpx.get(
-            "https://api.lu.ma/discover/get-paginated-events",
-            params={"period": "future", "pagination_limit": 50},
-            headers={"Accept": "application/json"},
-            timeout=15
-        )
-        if resp.status_code != 200:
-            print(f"Luma API returned {resp.status_code}")
-            return
-
-        data = resp.json()
-        events = data.get("entries", []) or data.get("events", []) or []
-
-        vc_keywords = ["vc", "venture", "founder", "startup", "investor", "seed", "pre-seed",
-                       "angels", "demo day", "pitch", "fundraising", "tech", "ai"]
-
-        for entry in events:
-            event = entry.get("event", entry)
-            name = event.get("name", "")
-            if not any(kw in name.lower() for kw in vc_keywords):
-                continue
-
-            start_at = event.get("start_at", "")
-            date_str = start_at[:10] if start_at else None
-            if not date_str:
-                continue
-
-            # Only future events
-            if date_str < datetime.now().strftime("%Y-%m-%d"):
-                continue
-
-            upsert_event({
-                "name": name,
-                "date": date_str,
-                "location": event.get("geo_address_info", {}).get("full_address", "San Francisco") if event.get("geo_address_info") else "San Francisco",
-                "host": event.get("hosts", [{}])[0].get("name", "") if event.get("hosts") else "",
-                "type": "Community",
-                "status": "Maybe",
-                "source": "luma",
-                "source_url": f"https://lu.ma/{event.get('url', '')}"
-            })
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return json.loads(r.read().decode())
     except Exception as e:
-        print(f"Luma scrape failed: {e}")
+        print(f"Fetch failed {url}: {e}")
+        return None
 
-
-def scrape_eventbrite():
-    """Scrape Eventbrite SF startup/VC events."""
+def event_exists(name, date):
+    url = f"{SUPABASE_URL}/rest/v1/events?name=eq.{urllib.parse.quote(name)}&date=eq.{date}&select=id"
+    req = urllib.request.Request(url)
+    for k, v in HEADERS_SB.items():
+        req.add_header(k, v)
     try:
-        resp = httpx.get(
-            "https://www.eventbriteapi.com/v3/events/search/",
-            params={
-                "q": "startup venture capital founder San Francisco",
-                "location.address": "San Francisco, CA",
-                "location.within": "10mi",
-                "start_date.range_start": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "start_date.range_end": (datetime.now() + timedelta(days=60)).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "expand": "venue",
-            },
-            headers={"Authorization": f"Bearer {os.environ.get('EVENTBRITE_TOKEN', '')}"},
-            timeout=15
-        )
-        if resp.status_code != 200:
-            print(f"Eventbrite API returned {resp.status_code}")
-            return
+        with urllib.request.urlopen(req) as r:
+            return len(json.loads(r.read())) > 0
+    except:
+        return False
 
-        for event in resp.json().get("events", []):
-            name = event.get("name", {}).get("text", "")
-            start = event.get("start", {}).get("local", "")
+def insert_event(ev):
+    if event_exists(ev["name"], ev.get("date", "")):
+        return
+    data = json.dumps(ev).encode()
+    req = urllib.request.Request(f"{SUPABASE_URL}/rest/v1/events", data=data, method="POST")
+    for k, v in HEADERS_SB.items():
+        req.add_header(k, v)
+    try:
+        urllib.request.urlopen(req)
+        print(f"Added: {ev['name']} on {ev.get('date')}")
+    except urllib.error.HTTPError as e:
+        print(f"Insert failed {e.code}: {ev['name']}")
+
+def scrape_luma_calendar(host, slug, event_type):
+    """Scrape a specific Luma calendar page."""
+    data = fetch_url(f"https://api.lu.ma/calendar/get-items?calendar_api_id={slug}&period=future")
+    if not data:
+        return
+    entries = data.get("entries", [])
+    for entry in entries:
+        ev = entry.get("event", entry)
+        name = ev.get("name", "")
+        start = ev.get("start_at", "")
+        date_str = start[:10] if start else None
+        if not date_str or date_str < TODAY or date_str > CUTOFF:
+            continue
+        geo = ev.get("geo_address_info") or {}
+        location = geo.get("full_address") or geo.get("city_state") or "San Francisco, CA"
+        if "san francisco" not in location.lower() and "sf" not in location.lower() and "bay area" not in location.lower():
+            continue
+        insert_event({
+            "name": name, "date": date_str, "location": location,
+            "host": host, "type": event_type, "status": "Maybe",
+            "source": "luma", "source_url": f"https://lu.ma/{ev.get('url', slug)}"
+        })
+
+def scrape_luma_search():
+    """Search Luma for SF VC/startup events."""
+    vc_terms = ["venture capital", "startup founders", "angel investors", "pre-seed", "seed round", "demo day"]
+    for term in vc_terms:
+        data = fetch_url(f"https://api.lu.ma/discover/get-paginated-events?period=future&pagination_limit=20&query={urllib.parse.quote(term)}")
+        if not data:
+            continue
+        for entry in data.get("entries", []):
+            ev = entry.get("event", entry)
+            name = ev.get("name", "")
+            start = ev.get("start_at", "")
             date_str = start[:10] if start else None
-            if not date_str:
+            if not date_str or date_str < TODAY:
                 continue
-            venue = event.get("venue", {})
-            location = venue.get("address", {}).get("localized_address_display", "San Francisco") if venue else "San Francisco"
-
-            upsert_event({
-                "name": name,
-                "date": date_str,
-                "location": location,
-                "host": "",
-                "type": "Community",
-                "status": "Maybe",
-                "source": "eventbrite",
-                "source_url": event.get("url", "")
+            geo = ev.get("geo_address_info") or {}
+            full_addr = (geo.get("full_address") or geo.get("city_state") or "").lower()
+            if not any(k in full_addr for k in ["san francisco", "sf,", "bay area", "soma", "mission"]):
+                continue
+            insert_event({
+                "name": name, "date": date_str,
+                "location": geo.get("full_address") or "San Francisco, CA",
+                "host": (ev.get("hosts") or [{}])[0].get("name", ""),
+                "type": "Community", "status": "Maybe",
+                "source": "luma", "source_url": f"https://lu.ma/{ev.get('url', '')}"
             })
-    except Exception as e:
-        print(f"Eventbrite scrape failed: {e}")
-
-
-def scrape_spc():
-    """Scrape South Park Commons events page."""
-    try:
-        resp = httpx.get("https://www.southparkcommons.com/events", timeout=15,
-                         headers={"User-Agent": "Mozilla/5.0"})
-        # Basic HTML parsing for event names and dates
-        import re
-        # Look for date patterns and event titles in HTML
-        text = resp.text
-        # Find JSON-LD structured data if present
-        ld_match = re.search(r'<script type="application/ld\+json">(.*?)</script>', text, re.DOTALL)
-        if ld_match:
-            try:
-                ld = json.loads(ld_match.group(1))
-                events = ld if isinstance(ld, list) else [ld]
-                for e in events:
-                    if e.get("@type") == "Event":
-                        name = e.get("name", "")
-                        start = e.get("startDate", "")
-                        date_str = start[:10] if start else None
-                        if date_str and date_str >= datetime.now().strftime("%Y-%m-%d"):
-                            upsert_event({
-                                "name": name,
-                                "date": date_str,
-                                "location": "South Park Commons, SF",
-                                "host": "South Park Commons",
-                                "type": "Community",
-                                "status": "Maybe",
-                                "source": "spc",
-                                "source_url": "https://www.southparkcommons.com/events"
-                            })
-            except Exception:
-                pass
-    except Exception as e:
-        print(f"SPC scrape failed: {e}")
-
 
 if __name__ == "__main__":
     print("Scraping SF VC events...")
-    scrape_luma()
-    scrape_spc()
-    # Eventbrite only if token available
-    if os.environ.get("EVENTBRITE_TOKEN"):
-        scrape_eventbrite()
+    for host, slug, etype in LUMA_CALENDARS:
+        scrape_luma_calendar(host, slug, etype)
+    scrape_luma_search()
     print("Done.")
