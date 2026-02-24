@@ -5,12 +5,24 @@ Saves to Supabase events table.
 Run daily via GitHub Actions.
 """
 import os, json, urllib.request, urllib.parse, urllib.error
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 SUPABASE_URL = os.environ.get("VITE_SUPABASE_URL", "https://datqjbnetudvqjsxjczl.supabase.co")
 SUPABASE_KEY = os.environ.get("VITE_SUPABASE_ANON_KEY", "")
-TODAY = datetime.now().strftime("%Y-%m-%d")
-CUTOFF = (datetime.now() + timedelta(days=90)).strftime("%Y-%m-%d")
+PST = timezone(timedelta(hours=-8))  # SF is UTC-8 (PST), UTC-7 in summer
+TODAY = datetime.now(PST).strftime("%Y-%m-%d")
+CUTOFF = (datetime.now(PST) + timedelta(days=90)).strftime("%Y-%m-%d")
+
+def utc_to_pst_date(utc_str: str) -> str:
+    """Convert a UTC ISO timestamp to PST date string."""
+    try:
+        # Handle formats: 2026-02-25T03:00:00Z or 2026-02-25T03:00:00+00:00
+        utc_str = utc_str.replace('Z', '+00:00')
+        dt_utc = datetime.fromisoformat(utc_str)
+        dt_pst = dt_utc.astimezone(PST)
+        return dt_pst.strftime("%Y-%m-%d")
+    except Exception:
+        return utc_str[:10]  # fallback to raw date
 
 HEADERS_SB = {
     "apikey": SUPABASE_KEY,
@@ -71,7 +83,7 @@ def scrape_luma_calendar(host, slug, event_type):
         ev = entry.get("event", entry)
         name = ev.get("name", "")
         start = ev.get("start_at", "")
-        date_str = start[:10] if start else None
+        date_str = utc_to_pst_date(start) if start else None
         if not date_str or date_str < TODAY or date_str > CUTOFF:
             continue
         geo = ev.get("geo_address_info") or {}
@@ -95,7 +107,7 @@ def scrape_luma_search():
             ev = entry.get("event", entry)
             name = ev.get("name", "")
             start = ev.get("start_at", "")
-            date_str = start[:10] if start else None
+            date_str = utc_to_pst_date(start) if start else None
             if not date_str or date_str < TODAY:
                 continue
             geo = ev.get("geo_address_info") or {}
