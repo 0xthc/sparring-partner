@@ -436,46 +436,78 @@ const PRECOGNITION_API = 'https://yc-scout.onrender.com'
 
 async function fetchEventBrief(eventName, eventHost) {
   try {
-    const [themesRes, breaksRes] = await Promise.all([
+    const [themesRes, breaksRes, statsRes] = await Promise.all([
       fetch(`${PRECOGNITION_API}/api/themes`),
       fetch(`${PRECOGNITION_API}/api/emergence`),
+      fetch(`${PRECOGNITION_API}/api/stats`),
     ])
     const themes = await themesRes.json()
     const breaks = await breaksRes.json()
+    const stats = await statsRes.json()
 
-    const topThemes = themes
-      .sort((a, b) => b.emergenceScore - a.emergenceScore)
-      .slice(0, 5)
-
-    const recentBreaks = (breaks || []).slice(0, 3)
-
+    // ── Patterns signal (top clusters) ───────────────────────
+    const topThemes = [...themes].sort((a, b) => b.emergenceScore - a.emergenceScore)
     const hostLower = (eventHost || '').toLowerCase()
-    const isConsumer = ['forerunner', 'imaginary', 'lita', 'consumer'].some(k => hostLower.includes(k))
-    const isInfra = ['a16z', 'sequoia', 'benchmark', 'infrastructure'].some(k => hostLower.includes(k))
+    const isConsumer = ['forerunner', 'imaginary', 'lita', 'consumer', 'collaborative'].some(k => hostLower.includes(k))
+    const isInfra = ['a16z', 'sequoia', 'benchmark', 'infrastructure', 'databricks'].some(k => hostLower.includes(k))
+    const isSecurity = ['cybersecurity', 'security', 'cyber'].some(k => hostLower.includes(k))
 
-    const relevantThemes = isConsumer
-      ? topThemes.filter(t => /consumer|e-commerce|retail|brand|food|culinary/i.test(t.name))
-      : isInfra
-      ? topThemes.filter(t => /infra|data|security|developer|devtools/i.test(t.name))
+    const filtered = isConsumer
+      ? topThemes.filter(t => /consumer|e-commerce|retail|brand|food|culinary|creator/i.test(t.name))
+      : isInfra ? topThemes.filter(t => /infra|data|developer|devtools|distributed|cloud/i.test(t.name))
+      : isSecurity ? topThemes.filter(t => /security|cyber|privacy/i.test(t.name))
       : topThemes
+    const displayThemes = (filtered.length >= 2 ? filtered : topThemes).slice(0, 3)
 
-    const displayThemes = (relevantThemes.length >= 2 ? relevantThemes : topThemes).slice(0, 3)
+    // ── Flow signal (sector heat from all themes) ─────────────
+    const sectorMap = {}
+    themes.forEach(t => {
+      const s = t.sector || 'Other'
+      if (!sectorMap[s]) sectorMap[s] = { count: 0, founders: 0 }
+      sectorMap[s].count++
+      sectorMap[s].founders += t.builderCount || 0
+    })
+    const sectorRanked = Object.entries(sectorMap)
+      .filter(([s]) => s !== 'Other')
+      .sort((a, b) => b[1].founders - a[1].founders)
+    const hotSector = sectorRanked[0]
+    const risingSector = sectorRanked[1]
+    const outlierSector = sectorRanked[sectorRanked.length - 1]
 
+    // ── Breaks signal (recent inflections) ───────────────────
+    const recentBreaks = (breaks || []).slice(0, 2)
+
+    // ── Build 5-point brief ───────────────────────────────────
     const points = []
 
+    // Point 1 — top pattern
     if (displayThemes[0]) {
-      points.push(`${displayThemes[0].name} is the strongest emerging cluster right now — ${displayThemes[0].builderCount} founders converging independently. Strong talking point if the space comes up.`)
-    }
-    if (displayThemes[1]) {
-      points.push(`${displayThemes[1].name} is also accelerating (${displayThemes[1].builderCount} builders). Worth mentioning as a second data point on where early-stage activity is concentrating.`)
-    }
-    if (recentBreaks[0]) {
-      points.push(`Fresh signal this week: ${recentBreaks[0].signal || recentBreaks[0].founderName + ' just crossed a momentum threshold'}. Good example of the type of pre-visibility signal Precognition surfaces.`)
-    } else if (displayThemes[2]) {
-      points.push(`${displayThemes[2].name} — ${displayThemes[2].builderCount} founders, early stage. An outlier pattern worth watching if you want to show range.`)
+      points.push(`Pattern: "${displayThemes[0].name}" is the sharpest cluster this week — ${displayThemes[0].builderCount} founders building independently in the same direction. Early signal, not yet visible in press.`)
     }
 
-    return points
+    // Point 2 — flow: hottest sector
+    if (hotSector) {
+      points.push(`Flow: ${hotSector[0]} is the hottest sector by founder activity right now — ${hotSector[1].founders} founders across ${hotSector[1].count} clusters. Capital tends to follow 3–6 months after this kind of founder density.`)
+    }
+
+    // Point 3 — flow: rising or unusual sector
+    if (risingSector && risingSector[0] !== hotSector?.[0]) {
+      points.push(`Flow: ${risingSector[0]} is accelerating fast as a second wave — ${risingSector[1].founders} founders, ${risingSector[1].count} distinct clusters. Worth watching as a contrarian signal.`)
+    } else if (displayThemes[1]) {
+      points.push(`Pattern: "${displayThemes[1].name}" — ${displayThemes[1].builderCount} founders, early momentum. A second data point on where builders are concentrating before market visibility.`)
+    }
+
+    // Point 4 — break/inflection
+    if (recentBreaks[0]) {
+      points.push(`Break: ${recentBreaks[0].signal || 'A founder in the dataset just crossed a key momentum threshold this week'} — the kind of early inflection Precognition is built to catch before it's public.`)
+    }
+
+    // Point 5 — meta credibility
+    if (stats?.total) {
+      points.push(`Scale: Precognition is currently tracking ${stats.total} founders across ${themes.length} emerging clusters. ${stats.strong || 0} have strong signal scores — that's the shortlist.`)
+    }
+
+    return points.slice(0, 4)
   } catch (e) {
     return ['Precognition data unavailable — check your connection to the intelligence backend.']
   }
