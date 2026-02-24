@@ -656,6 +656,7 @@ function TerrainEventCard({
   const [notesDraft, setNotesDraft] = useState(event.notes || '')
   const [brief, setBrief] = useState(null)
   const [briefLoading, setBriefLoading] = useState(false)
+  const [networkAdded, setNetworkAdded] = useState([])
 
   useEffect(() => {
     setGoalDraft(event.goal || '')
@@ -789,6 +790,35 @@ function TerrainEventCard({
                   Generate brief
                 </button>
               )}
+            </div>
+          )}
+
+          {event.host && (
+            <div className="host-network-row">
+              {event.host.split('+').map(h => h.trim()).filter(Boolean).map(hostName => {
+                const added = networkAdded.includes(hostName)
+                return (
+                  <button
+                    key={hostName}
+                    className={`btn ${added ? 'btn-light' : 'btn-dark'} host-add-btn`}
+                    disabled={added}
+                    type="button"
+                    onClick={async () => {
+                      const contact = {
+                        name: hostName,
+                        how_met: `Event: ${event.name}`,
+                        type: 'Investor',
+                        status: 'To reach',
+                        notes: `Met at: ${event.name} (${event.date})${event.source_url ? `\n${event.source_url}` : ''}`,
+                      }
+                      await supabase.from('contacts').insert(contact)
+                      setNetworkAdded(prev => [...prev, hostName])
+                    }}
+                  >
+                    {added ? `${hostName.split(' ')[0]} added ✓` : `+ Add ${hostName.split(' ')[0]} to Network`}
+                  </button>
+                )
+              })}
             </div>
           )}
 

@@ -903,3 +903,25 @@ tbody tr:last-child td {
   font-size: 11px;
   color: #999;
 }
+
+/* Host → Network buttons */
+.host-network-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.host-add-btn {
+  font-size: 11px;
+  padding: 5px 10px;
+}
+.btn-dark {
+  background: #1a1a1a;
+  color: #fff;
+  border: 1px solid #1a1a1a;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 6px 12px;
+}
+.btn-dark:hover { background: #333; }
