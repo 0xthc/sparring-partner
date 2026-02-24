@@ -308,7 +308,6 @@ function TerrainTab() {
       name: fieldNoteForm.name.trim() || 'Unknown',
       title: fieldNoteForm.title.trim() || null,
       fund: fieldNoteForm.fund.trim() || null,
-      type: 'Met at event',
       status: 'To reach',
       notes: noteParts.join(' '),
       how_met: fieldNoteEvent.name,
@@ -807,7 +806,6 @@ function TerrainEventCard({
                       const contact = {
                         name: hostName,
                         how_met: `Event: ${event.name}`,
-                        type: 'Investor',
                         status: 'To reach',
                         notes: `Met at: ${event.name} (${event.date})${event.source_url ? `\n${event.source_url}` : ''}`,
                       }
@@ -1142,7 +1140,6 @@ function OutreachTab() {
       name: form.name.trim(),
       title: form.title.trim() || null,
       fund: form.fund.trim() || null,
-      type: form.type || 'Investor',
       stage: form.stage || null,
       how_met: form.how_met.trim() || null,
       last_contact: form.last_contact || null,
