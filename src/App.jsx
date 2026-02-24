@@ -527,8 +527,13 @@ async function fetchEventBrief(eventName, eventHost) {
       fetch(`${PRECOGNITION_API}/api/stats`),
     ])
     const themes = await themesRes.json()
-    const breaks = await breaksRes.json()
+    const breaksRaw = await breaksRes.json()
     const stats = await statsRes.json()
+
+    // ── Parse breaks correctly (API returns {newThemes, inflectionFounders}) ─
+    const inflections = (breaksRaw?.inflectionFounders || [])
+      .filter(b => b.score >= 20 || b.eventType === 'score_threshold' || b.eventType === 'commit_spike' || b.eventType === 'star_spike')
+      .slice(0, 3)
 
     // ── Patterns signal (top clusters) ───────────────────────
     const topThemes = [...themes].sort((a, b) => b.emergenceScore - a.emergenceScore)
@@ -557,10 +562,9 @@ async function fetchEventBrief(eventName, eventHost) {
       .sort((a, b) => b[1].founders - a[1].founders)
     const hotSector = sectorRanked[0]
     const risingSector = sectorRanked[1]
-    const outlierSector = sectorRanked[sectorRanked.length - 1]
 
-    // ── Breaks signal (recent inflections) ───────────────────
-    const recentBreaks = (breaks || []).slice(0, 2)
+    // ── Breaks signal ────────────────────────────────────────
+    const recentBreak = inflections[0]
 
     // ── Host intel ────────────────────────────────────────────
     const hostIntel = getHostIntel(eventHost)
@@ -590,9 +594,10 @@ async function fetchEventBrief(eventName, eventHost) {
       points.push(`Pattern: "${displayThemes[1].name}" — ${displayThemes[1].builderCount} founders. Second data point on where builders are concentrating before market visibility.`)
     }
 
-    // Point 5 — break/inflection
-    if (recentBreaks[0]) {
-      points.push(`Break: ${recentBreaks[0].signal || 'A founder in the dataset just crossed a momentum threshold this week'} — the type of pre-visibility signal Precognition surfaces before it hits press.`)
+    // Point 4 — break/inflection
+    if (recentBreak) {
+      const founderLabel = recentBreak.founderName || recentBreak.founderHandle || 'A tracked founder'
+      points.push(`Break: ${founderLabel} — ${recentBreak.signal || 'crossed a momentum threshold this week'}. This is the type of pre-visibility signal Precognition surfaces before it hits press.`)
     }
 
     return points.slice(0, 4)
