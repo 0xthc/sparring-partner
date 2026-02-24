@@ -436,6 +436,52 @@ function TerrainTab() {
 
 const PRECOGNITION_API = 'https://yc-scout.onrender.com'
 
+function buildGCalUrl(event) {
+  const dateStr = event.date || ''
+  const locationRaw = event.location || ''
+  const timePart = locationRaw.includes(' • ') ? locationRaw.split(' • ')[0].trim() : null
+  const locationClean = locationRaw.includes(' • ') ? locationRaw.split(' • ').slice(1).join(' • ') : locationRaw
+
+  let startStr, endStr
+  if (timePart) {
+    // Parse "5:00 PM" or "10:00 AM" into 24h and build Google Calendar date-time
+    const match = timePart.match(/(\d+):(\d+)\s*(AM|PM)/i)
+    if (match) {
+      let h = parseInt(match[1])
+      const m = parseInt(match[2])
+      const ampm = match[3].toUpperCase()
+      if (ampm === 'PM' && h !== 12) h += 12
+      if (ampm === 'AM' && h === 12) h = 0
+      const endH = h + 2  // default 2 hour duration
+      const pad = n => String(n).padStart(2, '0')
+      const base = dateStr.replace(/-/g, '')
+      startStr = `${base}T${pad(h)}${pad(m)}00`
+      endStr = `${base}T${pad(endH)}${pad(m)}00`
+    }
+  }
+  if (!startStr) {
+    // All-day fallback
+    const base = dateStr.replace(/-/g, '')
+    const nextDay = new Date(dateStr)
+    nextDay.setDate(nextDay.getDate() + 1)
+    const nextBase = nextDay.toISOString().slice(0, 10).replace(/-/g, '')
+    startStr = base
+    endStr = nextBase
+  }
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.name || 'Event',
+    dates: `${startStr}/${endStr}`,
+    location: locationClean,
+    details: [
+      event.host ? `Host: ${event.host}` : '',
+      event.source_url ? `RSVP: ${event.source_url}` : '',
+    ].filter(Boolean).join('\n'),
+  })
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+
 const DEFAULT_POSTURE = 'You are a VC scout with a signal edge, not a job seeker. Lead by sharing what you are tracking. If roles come up: "I am looking for a home where I can do this kind of sourcing at scale." Never ask about open positions directly.'
 
 const DEFAULT_QUESTIONS = [
@@ -898,6 +944,18 @@ function TerrainEventCard({
               {status}
             </button>
           ))}
+          {event.status === 'Going' && (
+            <a
+              href={buildGCalUrl(event)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="gcal-btn"
+              title="Add to Google Calendar"
+            >
+              + Google Calendar
+            </a>
+          )}
         </div>
 
         <div className="goal-inline">
