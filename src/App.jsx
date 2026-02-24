@@ -508,6 +508,34 @@ const HOST_INTEL = {
     angle: 'YC is the highest signal accelerator in the world. W26 batch will surface the best early-stage companies of the year.',
     hook: 'Demo Days are about spotting the one company others will miss. Come with a sector thesis, not a FOMO mindset.',
   },
+  'cathay innovation': {
+    gp: 'Arnaud AUGER',
+    focus: 'AI, deep tech, longevity, health, global expansion',
+    stage: 'Series A–C',
+    angle: 'Cathay Innovation is one of the few global funds ($2.7B AUM) with a real longevity thesis. Arnaud Auger co-founded Don\'t Die SF — he is a practitioner, not just an investor.',
+    hook: 'Lead with the intersection of AI and longevity biomarkers, or brain-computer interfaces. He thinks in decades, not quarters.',
+  },
+  'don\'t die': {
+    gp: 'Community / Arnaud AUGER',
+    focus: 'longevity, biohacking, neurotech, cognitive health',
+    stage: 'community',
+    angle: 'Don\'t Die SF is a longevity-focused founder and investor community. Attendees skew deep tech, biotech, and neurotech — serious about the science, not just the trend.',
+    hook: 'Come with a specific health data point or founder signal from Precognition in the longevity space. This crowd respects signal over story.',
+  },
+  'obvious ventures': {
+    gp: 'James Joaquin / Ev Williams',
+    focus: 'health, sustainability, education, impact',
+    stage: 'seed–Series B',
+    angle: 'Obvious Ventures backs "world positive" companies — they want profit and planet to be the same bet.',
+    hook: 'Frame the mission as structurally necessary for the business, not a differentiator. They are allergic to impact-washing.',
+  },
+  'village global': {
+    gp: 'Erik Torenberg',
+    focus: 'B2B SaaS, consumer, founders-first community',
+    stage: 'pre-seed–seed',
+    angle: 'Village Global is network-driven — they back founders through peer cohorts and have an unusually strong community layer.',
+    hook: 'Show you are a connector, not just a builder. Village bets on founders who attract other founders.',
+  },
 }
 
 function getHostIntel(hostName) {

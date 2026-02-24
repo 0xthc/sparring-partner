@@ -113,6 +113,15 @@ def scrape_luma_calendar(host, slug, event_type):
             "source": "luma", "source_url": f"https://lu.ma/{ev.get('url', slug)}"
         })
 
+def fetch_luma_hosts(event_api_id: str) -> str:
+    """Fetch host names from Luma event detail API."""
+    data = fetch_url(f"https://api.lu.ma/event/get?event_api_id={event_api_id}")
+    if not data:
+        return ""
+    hosts = data.get("hosts", []) or []
+    names = [h.get("name", "") for h in hosts if h.get("name")]
+    return " + ".join(names[:2])  # max 2 hosts to keep it clean
+
 def scrape_luma_search():
     """Search Luma for SF VC/startup events."""
     vc_terms = ["venture capital", "startup founders", "angel investors", "pre-seed", "seed round", "demo day"]
@@ -131,14 +140,17 @@ def scrape_luma_search():
             full_addr = (geo.get("full_address") or geo.get("city_state") or "").lower()
             if not any(k in full_addr for k in ["san francisco", "sf,", "bay area", "soma", "mission"]):
                 continue
+            # Fetch full event details for host names (search API returns null for hosts)
+            event_url = ev.get("url", "")
+            host_names = fetch_luma_hosts(event_url) if event_url else ""
             time_str = utc_to_pst_time(start) if start else ""
             raw_loc = geo.get("full_address") or "San Francisco, CA"
             insert_event({
                 "name": name, "date": date_str,
                 "location": with_time(raw_loc, time_str),
-                "host": (ev.get("hosts") or [{}])[0].get("name", ""),
+                "host": host_names,
                 "type": "Community", "status": "Maybe",
-                "source": "luma", "source_url": f"https://lu.ma/{ev.get('url', '')}"
+                "source": "luma", "source_url": f"https://lu.ma/{event_url}"
             })
 
 if __name__ == "__main__":
