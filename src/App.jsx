@@ -436,118 +436,224 @@ function TerrainTab() {
 
 const PRECOGNITION_API = 'https://yc-scout.onrender.com'
 
+const DEFAULT_POSTURE = 'You are a VC scout with a signal edge, not a job seeker. Lead by sharing what you are tracking. If roles come up: "I am looking for a home where I can do this kind of sourcing at scale." Never ask about open positions directly.'
+
+const DEFAULT_QUESTIONS = [
+  '"What are you seeing in your deal flow right now that most people aren\'t paying attention to yet?"',
+  '"Where do you think founder density is building before the market has noticed?"',
+  '"What would make you immediately excited about a founder you just met?"',
+]
+
 const HOST_INTEL = {
   'forerunner': {
     gp: 'Kirsten Green',
     focus: 'consumer, brand, commerce, next-gen retail',
     stage: 'Series A–B',
-    angle: 'Forerunner backs brands that shift how people live — they care deeply about cultural timing and consumer psychology, not just unit economics.',
+    topics: ['consumer', 'retail', 'brand', 'commerce', 'food', 'creator'],
+    angle: 'Forerunner backs brands that shift how people live — cultural timing and consumer psychology over unit economics.',
     hook: 'Lead with consumer behavior shifts, not TAM. Kirsten Green thinks in waves of taste, not market maps.',
+    questions: [
+      '"Where are you seeing consumer behavior shift before it shows up in data?"',
+      '"What does a brand look like today that has the same structural moat as Glossier did in 2015?"',
+      '"How do you think about EU consumer trends as a leading indicator for the US?"',
+    ],
+    posture: `${DEFAULT_POSTURE} With Forerunner: share a specific consumer signal from Precognition — a cluster of founders converging on the same behavior shift. That is the language they speak.`,
   },
   'hustle fund': {
     gp: 'Elizabeth Yin',
     focus: 'pre-seed, B2B SaaS, founder velocity',
     stage: 'pre-seed / seed',
-    angle: 'Hustle Fund moves fast and bets on hustle over pedigree. Elizabeth Yin is vocal about founder speed as signal.',
-    hook: 'Lead with speed of execution and scrappy early traction. They fund founders who move faster than the market.',
+    topics: ['saas', 'b2b', 'productivity', 'developer'],
+    angle: 'Hustle Fund bets on founder speed over pedigree. Elizabeth Yin is vocal that execution velocity is the only signal that matters pre-traction.',
+    hook: 'Lead with speed of execution and scrappy early traction.',
+    questions: [
+      '"How do you separate genuine execution speed from hustle theater in the first meeting?"',
+      '"What\'s the earliest signal you\'ve seen that turned into a real company?"',
+      '"Where do you think pre-seed is underpriced right now?"',
+    ],
+    posture: `${DEFAULT_POSTURE} With Hustle Fund: show your own velocity — mention how fast you built Precognition and what it already surfaces.`,
   },
   'precursor': {
     gp: 'Charles Hudson',
     focus: 'pre-product pre-seed, underrepresented founders',
     stage: 'pre-seed',
-    angle: 'Precursor is the most pre-conviction fund in SF — they fund ideas and people before there is a product.',
-    hook: 'Lead with your thesis on a space, not a deck. Charles values thinking over traction at this stage.',
+    topics: [],
+    angle: 'Precursor funds ideas and people before there is a product. Most pre-conviction fund in SF.',
+    hook: 'Lead with a thesis on a space, not a deck. Charles values thinking over traction.',
+    questions: [
+      '"What does a founder look like at the pre-product stage that makes you say yes before anyone else would?"',
+      '"How do you think about sourcing founders who wouldn\'t naturally find their way to Sand Hill Road?"',
+      '"What thesis are you building conviction around right now that isn\'t consensus yet?"',
+    ],
+    posture: `${DEFAULT_POSTURE} With Precursor: show your sourcing instinct. You are already doing what their scouts do — finding signal before it is obvious.`,
   },
   'south park commons': {
     gp: 'Ruchi Sanghvi / community',
     focus: 'technical founders, deep exploration, pre-idea',
     stage: 'community / pre-company',
-    angle: 'SPC is a founder community, not a traditional VC. Members explore ideas together before committing to a company.',
-    hook: 'Come with intellectual curiosity and a problem you are obsessing over, not a polished pitch.',
+    topics: ['developer', 'infrastructure', 'research'],
+    angle: 'SPC is a founder community, not a VC. Members explore ideas together before committing to a company.',
+    hook: 'Come with intellectual curiosity and a problem you are obsessing over.',
+    questions: [
+      '"What kinds of exploration do SPC members do that you don\'t see in the broader ecosystem?"',
+      '"Where do you see the most interesting pre-company thinking happening right now?"',
+      '"What problems do you wish more technical founders were working on?"',
+    ],
+    posture: `${DEFAULT_POSTURE} SPC values intellectual honesty over polish — be direct about what you are exploring and why.`,
   },
   'a16z': {
     gp: 'Marc Andreessen / various',
     focus: 'AI, crypto, bio, consumer, fintech',
     stage: 'seed through growth',
-    angle: 'a16z operates at scale — they are looking for category-defining companies, not incremental improvements.',
-    hook: 'Lead with why this is a platform shift, not a product. They want to back the next computing paradigm.',
+    topics: ['ai', 'crypto', 'infrastructure', 'developer'],
+    angle: 'a16z looks for category-defining companies, not incremental improvements. Platform shifts only.',
+    hook: 'Lead with why this is a platform shift. They want to back the next computing paradigm.',
+    questions: [
+      '"What platform shift do you think is still underestimated by the market right now?"',
+      '"How do you think about founder signal at the earliest stages before a paradigm is obvious?"',
+      '"Where is the best early-stage activity happening that isn\'t getting a16z-scale attention yet?"',
+    ],
+    posture: `${DEFAULT_POSTURE} With a16z: think big. They are not interested in niches. Frame Precognition as a signal infrastructure layer, not a tool.`,
   },
   'collaborative fund': {
     gp: 'Craig Shapiro',
     focus: 'impact, consumer, climate, future of work',
     stage: 'seed–Series A',
-    angle: 'Collaborative Fund backs companies where doing good and doing well are the same thing.',
-    hook: 'Frame the mission as the moat. They believe purpose-driven brands have structural defensibility.',
+    topics: ['consumer', 'climate', 'impact', 'sustainability'],
+    angle: 'Collaborative Fund backs companies where doing good and doing well are the same bet.',
+    hook: 'Frame mission as structural moat, not values add-on.',
+    questions: [
+      '"Where do you see mission becoming a competitive advantage rather than a marketing layer?"',
+      '"What impact vertical is most underinvested relative to the founder activity you\'re seeing?"',
+      '"How do you think about consumer brands where the EU market is 2-3 years ahead of the US?"',
+    ],
+    posture: `${DEFAULT_POSTURE} With Collaborative: your EU impact background (Lita.co) is directly relevant. Lead with that lens.`,
   },
   'first round': {
     gp: 'Josh Kopelman',
     focus: 'B2B SaaS, marketplace, consumer tech',
     stage: 'seed',
-    angle: 'First Round is the gold standard seed fund — known for deep founder support and their Review content platform.',
-    hook: 'Show you have done the work on your category. First Round loves founders who think like writers and researchers.',
+    topics: ['saas', 'marketplace', 'consumer', 'b2b'],
+    angle: 'First Round is the gold standard seed fund — known for deep founder support and the First Round Review.',
+    hook: 'Show you have done the work on your category. They love founders who think like writers.',
+    questions: [
+      '"What does the First Round Review tell you about what founders are actually struggling with right now?"',
+      '"Where do you see seed-stage companies getting the most leverage from AI tools in their operations?"',
+      '"What category do you wish you were seeing more founder activity in?"',
+    ],
+    posture: `${DEFAULT_POSTURE} First Round respects deep category knowledge. Show you have done the reading.`,
   },
   'imaginary': {
     gp: 'Natalie Massenet',
     focus: 'luxury, fashion, consumer, culture',
     stage: 'seed–Series A',
-    angle: 'Imaginary Ventures is the EU-to-US taste bridge. Natalie Massenet built Net-a-Porter — she patterns matches on category-defining consumer brands.',
-    hook: 'Lead with your EU consumer lens as a predictor of US trends. That is your edge with her.',
+    topics: ['consumer', 'fashion', 'luxury', 'brand', 'retail', 'creator'],
+    angle: 'Imaginary Ventures is the EU-to-US taste bridge. Natalie Massenet built Net-a-Porter — she pattern-matches on category-defining consumer brands.',
+    hook: 'Your EU consumer lens is your edge here. Lead with it.',
+    questions: [
+      '"How do you think about EU consumer brands as early signals for what the US market will want in 2-3 years?"',
+      '"What does a luxury brand look like today that has the distribution moat Net-a-Porter had in 2000?"',
+      '"Where is taste shifting in consumer that hasn\'t been fully captured by US founders yet?"',
+    ],
+    posture: `${DEFAULT_POSTURE} With Natalie: your EU background is the pitch. You have seen what US consumers want before they know they want it.`,
   },
   'dbl partners': {
     gp: 'Nancy Pfund',
     focus: 'impact, climate, healthcare, education',
     stage: 'seed–growth',
-    angle: 'DBL pioneered impact + returns investing. They backed Tesla, Revolution Foods, the model for mission-driven growth.',
-    hook: 'Show the impact thesis is load-bearing for the business model, not a values add-on.',
+    topics: ['climate', 'impact', 'health', 'education', 'sustainability'],
+    angle: 'DBL pioneered impact + returns. They backed Tesla and Revolution Foods — mission as structural business advantage.',
+    hook: 'Show the impact thesis is load-bearing, not decorative.',
+    questions: [
+      '"What does a company look like today where the impact thesis is actually what creates the defensibility?"',
+      '"Where do you see climate tech founder activity concentrating before the capital has followed?"',
+      '"How has the definition of \'double bottom line\' shifted since you backed Tesla?"',
+    ],
+    posture: `${DEFAULT_POSTURE} DBL values rigor over optimism. Come with a specific signal, not a vision.`,
   },
   'y combinator': {
     gp: 'Garry Tan',
     focus: 'all sectors, global, technical founders',
     stage: 'pre-seed',
-    angle: 'YC is the highest signal accelerator in the world. W26 batch will surface the best early-stage companies of the year.',
-    hook: 'Demo Days are about spotting the one company others will miss. Come with a sector thesis, not a FOMO mindset.',
+    topics: [],
+    angle: 'YC is the highest-signal accelerator in the world. W26 batch surfaces the best early-stage companies of the year.',
+    hook: 'Spotting the one company others will miss is the game. Come with a sector thesis.',
+    questions: [
+      '"What pattern have you seen in this batch that you didn\'t expect?"',
+      '"Which sectors are the most technically ambitious founders gravitating toward right now?"',
+      '"Where do you think YC is still underrepresented in terms of founder backgrounds or geographies?"',
+    ],
+    posture: `${DEFAULT_POSTURE} At YC events: sector thesis is your currency. Show you can spot the non-obvious one.`,
   },
   'arnaud auger': {
     gp: 'Arnaud Auger',
     focus: 'AI, deep tech, longevity, neurotech, cognitive health',
     stage: 'Series A–C',
     topics: ['longevity', 'health', 'brain', 'neuro', 'biotech', 'aging'],
-    angle: 'Arnaud Auger is Director at Cathay Innovation ($2.7B AUM) and co-founder of Don\'t Die SF. He is both a capital allocator and a longevity practitioner — rare combination.',
-    hook: 'Lead with founder signals in AI × longevity — show you are tracking the space before it is obvious. Don\'t pitch reactively.',
+    angle: 'Arnaud Auger is Director at Cathay Innovation ($2.7B AUM) and co-founder of Don\'t Die SF. Capital allocator and longevity practitioner — rare combination.',
+    hook: 'Lead with founder signals in AI × longevity. Show you are tracking the space before it is obvious.',
     questions: [
-      '"What founder signals tell you something real is happening in a longevity vertical — before the press catches it?"',
-      '"Where do you see the biggest gap between what the science says is possible and what\'s actually being built right now?"',
+      '"What founder signals tell you something real is happening in a longevity vertical — before press catches it?"',
+      '"Where is the biggest gap between what the science says is possible and what\'s actually being built?"',
       '"Is Don\'t Die SF surfacing founders you wouldn\'t see through traditional deal flow?"',
     ],
-    posture: 'You are a VC scout with a signal edge, not a job seeker. Lead by sharing what you are seeing — "I\'ve been tracking early founder density in longevity AI, here\'s what stands out." Let the conversation do the work. If the topic of roles comes up, frame it as: "I am looking for a home where I can do this kind of sourcing at scale." Never ask about open positions directly.',
+    posture: `${DEFAULT_POSTURE} With Arnaud: share your sourcing methodology. "I track pre-visibility founder density — the same approach applies to longevity, I just don't have the dataset yet."`,
   },
   'cathay innovation': {
     gp: 'Arnaud Auger',
-    focus: 'AI, deep tech, longevity, health, global expansion',
+    focus: 'AI, deep tech, longevity, global expansion',
     stage: 'Series A–C',
-    angle: 'Cathay Innovation is one of the few global funds ($2.7B AUM) with a real longevity thesis. Arnaud Auger co-founded Don\'t Die SF — he is a practitioner, not just an investor.',
-    hook: 'Lead with the intersection of AI and longevity biomarkers, or brain-computer interfaces. He thinks in decades, not quarters.',
+    topics: ['longevity', 'health', 'brain', 'neuro', 'ai', 'deep tech'],
+    angle: 'Cathay Innovation ($2.7B AUM) has a real longevity thesis and global lens. Rare combination at this fund size.',
+    hook: 'Lead with the intersection of AI and longevity biomarkers. Think in decades.',
+    questions: [
+      '"How does Cathay\'s global LP base shape which longevity bets you take versus a purely US-focused fund?"',
+      '"What does the longevity founder look like that gets you excited at the Series A stage?"',
+      '"Where do you see AI making the biggest dent in the aging research pipeline?"',
+    ],
+    posture: DEFAULT_POSTURE,
   },
   'don\'t die': {
     gp: 'Arnaud Auger + Community',
     focus: 'longevity, biohacking, neurotech, cognitive health',
     stage: 'community',
-    angle: 'Don\'t Die SF is a longevity-focused founder and investor community. Attendees skew deep tech, biotech, and neurotech — serious about the science, not just the trend.',
-    hook: 'Come with a specific health data point or founder signal from Precognition in the longevity space. This crowd respects signal over story.',
+    topics: ['longevity', 'health', 'brain', 'neuro', 'biotech'],
+    angle: 'Don\'t Die SF is a longevity practitioner community — founders, investors, and scientists serious about the science.',
+    hook: 'This crowd respects signal over story. Come with a specific observation, not a vision.',
+    questions: [
+      '"What is the most underrated longevity intervention that doesn\'t have a company around it yet?"',
+      '"Where do you see AI creating the most leverage in extending healthspan versus lifespan?"',
+      '"What founder signal in this space would make you immediately pay attention?"',
+    ],
+    posture: DEFAULT_POSTURE,
   },
   'obvious ventures': {
     gp: 'James Joaquin / Ev Williams',
     focus: 'health, sustainability, education, impact',
     stage: 'seed–Series B',
-    angle: 'Obvious Ventures backs "world positive" companies — they want profit and planet to be the same bet.',
-    hook: 'Frame the mission as structurally necessary for the business, not a differentiator. They are allergic to impact-washing.',
+    topics: ['climate', 'health', 'education', 'sustainability', 'impact'],
+    angle: 'Obvious Ventures backs "world positive" companies — profit and planet aligned structurally.',
+    hook: 'Mission must be load-bearing, not a differentiator.',
+    questions: [
+      '"How do you identify when a mission is structurally baked in versus bolted on?"',
+      '"What impact vertical do you think is most underinvested relative to the urgency?"',
+      '"Where are you seeing founder activity that the impact investing world hasn\'t priced in yet?"',
+    ],
+    posture: DEFAULT_POSTURE,
   },
   'village global': {
     gp: 'Erik Torenberg',
-    focus: 'B2B SaaS, consumer, founders-first community',
+    focus: 'B2B SaaS, consumer, founders-first',
     stage: 'pre-seed–seed',
-    angle: 'Village Global is network-driven — they back founders through peer cohorts and have an unusually strong community layer.',
-    hook: 'Show you are a connector, not just a builder. Village bets on founders who attract other founders.',
+    topics: ['saas', 'consumer', 'community', 'b2b'],
+    angle: 'Village Global is network-driven — peer cohorts over traditional VC hierarchy.',
+    hook: 'Show you are a connector. Village bets on founders who attract other founders.',
+    questions: [
+      '"How does the peer cohort model change which founders you see versus a traditional fund?"',
+      '"What does \'network density\' look like as a signal for a company\'s early trajectory?"',
+      '"Where do you see the most interesting founder communities forming right now outside of YC?"',
+    ],
+    posture: DEFAULT_POSTURE,
   },
 }
 
@@ -639,34 +745,36 @@ async function fetchEventBrief(eventName, eventHost) {
       if (relevantThemes[1]) {
         points.push(`Pattern: "${relevantThemes[1].name}" — ${relevantThemes[1].builderCount} founders. Second convergence point in the same space.`)
       }
-    } else if (hostIntel?.topics?.length) {
-      // No domain signal in Precognition for this vertical — use the methodology as the angle
-      points.push(`No ${hostIntel.topics.slice(0,2).join(' / ')} signal in Precognition yet — this vertical isn't well-represented in the dataset. Your edge tonight is the methodology itself: you track pre-visibility founder density before the market sees it. Use that as the conversation starter, not a data point you don't have.`)
-      if (hostIntel?.questions?.length) {
-        points.push(`Questions to open with: ${hostIntel.questions.join(' / ')}`)
-      }
     } else {
-      // Generic fallback — top sector flow
-      if (hotSector) {
-        points.push(`Flow: ${hotSector[0]} is the most active sector right now — ${hotSector[1].founders} founders across ${hotSector[1].count} clusters. Capital follows founder density by 3–6 months.`)
-      }
-      if (displayThemes[0]) {
-        points.push(`Pattern: "${displayThemes[0].name}" — ${displayThemes[0].builderCount} founders converging. Strongest cluster this week.`)
+      // No domain signal in Precognition — be honest, pivot to methodology
+      if (hostIntel?.topics?.length) {
+        points.push(`Precognition doesn't have strong ${hostIntel.topics.slice(0,2).join(' / ')} signal yet — this vertical isn't well-represented in the dataset. Your edge is the methodology itself: you surface pre-visibility founder density before the market sees it. That's the conversation to have.`)
+      } else {
+        // Generic flow signal as context
+        if (hotSector) {
+          points.push(`Precognition signal: ${hotSector[0]} is the most active sector right now — ${hotSector[1].founders} founders across ${hotSector[1].count} clusters. Mention it if AI / dev tools comes up.`)
+        }
+        if (displayThemes[0]) {
+          points.push(`Strongest cluster this week: "${displayThemes[0].name}" — ${displayThemes[0].builderCount} founders converging independently. Early signal.`)
+        }
       }
     }
 
-    // Break signal — always relevant
+    // Questions — host-specific or default
+    const questions = hostIntel?.questions?.length ? hostIntel.questions : DEFAULT_QUESTIONS
+    points.push(`Questions to open with:\n${questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}`)
+
+    // Break signal
     if (recentBreak) {
       const founderLabel = recentBreak.founderName || recentBreak.founderHandle || 'A tracked founder'
-      points.push(`Signal: ${founderLabel} — ${recentBreak.signal || 'crossed a momentum threshold this week'}. Pre-visibility signal from Precognition.`)
+      points.push(`Live signal: ${founderLabel} — ${recentBreak.signal || 'crossed a momentum threshold this week'}. Pre-visibility from Precognition.`)
     }
 
-    // Posture — always last if host intel has it
-    if (hostIntel?.posture) {
-      points.push(`Posture: ${hostIntel.posture}`)
-    }
+    // Posture — always last
+    const posture = hostIntel?.posture || DEFAULT_POSTURE
+    points.push(`Posture: ${posture}`)
 
-    return points.slice(0, 5)
+    return points
   } catch (e) {
     return ['Precognition data unavailable — check your connection to the intelligence backend.']
   }
