@@ -452,7 +452,8 @@ const HOST_INTEL = {
     topics: ['consumer', 'retail', 'brand', 'commerce', 'food', 'creator'],
     angle: 'Forerunner backs brands that shift how people live — cultural timing and consumer psychology over unit economics.',
     hook: 'Lead with consumer behavior shifts, not TAM. Kirsten Green thinks in waves of taste, not market maps.',
-    questions: [
+    icebreaker: 'Kirsten Green lights up when you mention a specific brand moment — a brand she hasn\'t heard of that blew up in Europe. Ask her view on the next cultural shift in consumer before it hits US data.',
+        questions: [
       '"Where are you seeing consumer behavior shift before it shows up in data?"',
       '"What does a brand look like today that has the same structural moat as Glossier did in 2015?"',
       '"How do you think about EU consumer trends as a leading indicator for the US?"',
@@ -466,7 +467,8 @@ const HOST_INTEL = {
     topics: ['saas', 'b2b', 'productivity', 'developer'],
     angle: 'Hustle Fund bets on founder speed over pedigree. Elizabeth Yin is vocal that execution velocity is the only signal that matters pre-traction.',
     hook: 'Lead with speed of execution and scrappy early traction.',
-    questions: [
+    icebreaker: 'Elizabeth Yin is very active on X and writes candidly about VC dysfunction. She likes people who read her work. Also ask about building Hustle Fund small on purpose — she talks about it proudly.',
+        questions: [
       '"How do you separate genuine execution speed from hustle theater in the first meeting?"',
       '"What\'s the earliest signal you\'ve seen that turned into a real company?"',
       '"Where do you think pre-seed is underpriced right now?"',
@@ -480,7 +482,8 @@ const HOST_INTEL = {
     topics: [],
     angle: 'Precursor funds ideas and people before there is a product. Most pre-conviction fund in SF.',
     hook: 'Lead with a thesis on a space, not a deck. Charles values thinking over traction.',
-    questions: [
+    icebreaker: 'Charles Hudson is warm and not typical Sand Hill. Into music and the SF community. Easy opener: what does he think is underrated about the SF ecosystem right now?',
+        questions: [
       '"What does a founder look like at the pre-product stage that makes you say yes before anyone else would?"',
       '"How do you think about sourcing founders who wouldn\'t naturally find their way to Sand Hill Road?"',
       '"What thesis are you building conviction around right now that isn\'t consensus yet?"',
@@ -494,7 +497,8 @@ const HOST_INTEL = {
     topics: ['developer', 'infrastructure', 'research'],
     angle: 'SPC is a founder community, not a VC. Members explore ideas together before committing to a company.',
     hook: 'Come with intellectual curiosity and a problem you are obsessing over.',
-    questions: [
+    icebreaker: 'SPC culture: low ego, curiosity beats credentials. Best opener with anyone in the room: "what\'s the problem you can\'t stop thinking about?" Works every time.',
+        questions: [
       '"What kinds of exploration do SPC members do that you don\'t see in the broader ecosystem?"',
       '"Where do you see the most interesting pre-company thinking happening right now?"',
       '"What problems do you wish more technical founders were working on?"',
@@ -508,7 +512,8 @@ const HOST_INTEL = {
     topics: ['ai', 'crypto', 'infrastructure', 'developer'],
     angle: 'a16z looks for category-defining companies, not incremental improvements. Platform shifts only.',
     hook: 'Lead with why this is a platform shift. They want to back the next computing paradigm.',
-    questions: [
+    icebreaker: 'a16z partners publish constantly — find who\'s in the room and reference something specific they\'ve written. They notice when people actually read their work.',
+        questions: [
       '"What platform shift do you think is still underestimated by the market right now?"',
       '"How do you think about founder signal at the earliest stages before a paradigm is obvious?"',
       '"Where is the best early-stage activity happening that isn\'t getting a16z-scale attention yet?"',
@@ -522,7 +527,8 @@ const HOST_INTEL = {
     topics: ['consumer', 'climate', 'impact', 'sustainability'],
     angle: 'Collaborative Fund backs companies where doing good and doing well are the same bet.',
     hook: 'Frame mission as structural moat, not values add-on.',
-    questions: [
+    icebreaker: 'Craig Shapiro ties culture (music, skate, art) to brand infrastructure. Ask what he thinks has changed in impact investing over the last 5 years — he has strong opinions and enjoys the question.',
+        questions: [
       '"Where do you see mission becoming a competitive advantage rather than a marketing layer?"',
       '"What impact vertical is most underinvested relative to the founder activity you\'re seeing?"',
       '"How do you think about consumer brands where the EU market is 2-3 years ahead of the US?"',
@@ -536,7 +542,8 @@ const HOST_INTEL = {
     topics: ['saas', 'marketplace', 'consumer', 'b2b'],
     angle: 'First Round is the gold standard seed fund — known for deep founder support and the First Round Review.',
     hook: 'Show you have done the work on your category. They love founders who think like writers.',
-    questions: [
+    icebreaker: 'Josh Kopelman is self-deprecating and direct. Opener: "what do you think seed investing consistently gets wrong about founder-market fit?" He will have an answer.',
+        questions: [
       '"What does the First Round Review tell you about what founders are actually struggling with right now?"',
       '"Where do you see seed-stage companies getting the most leverage from AI tools in their operations?"',
       '"What category do you wish you were seeing more founder activity in?"',
@@ -550,7 +557,8 @@ const HOST_INTEL = {
     topics: ['consumer', 'fashion', 'luxury', 'brand', 'retail', 'creator'],
     angle: 'Imaginary Ventures is the EU-to-US taste bridge. Natalie Massenet built Net-a-Porter — she pattern-matches on category-defining consumer brands.',
     hook: 'Your EU consumer lens is your edge here. Lead with it.',
-    questions: [
+    icebreaker: 'Natalie Massenet built Net-a-Porter in London and has a strong sense of European culture. Opener: name a brand you\'ve seen in Paris that hasn\'t landed in the US yet, and why it will. That\'s her language.',
+        questions: [
       '"How do you think about EU consumer brands as early signals for what the US market will want in 2-3 years?"',
       '"What does a luxury brand look like today that has the distribution moat Net-a-Porter had in 2000?"',
       '"Where is taste shifting in consumer that hasn\'t been fully captured by US founders yet?"',
@@ -564,7 +572,8 @@ const HOST_INTEL = {
     topics: ['climate', 'impact', 'health', 'education', 'sustainability'],
     angle: 'DBL pioneered impact + returns. They backed Tesla and Revolution Foods — mission as structural business advantage.',
     hook: 'Show the impact thesis is load-bearing, not decorative.',
-    questions: [
+    icebreaker: 'Nancy Pfund backed Tesla in 2006 when it was deeply unfashionable. She responds to rigour, not optimism. Ask how she thinks about the current climate hype cycle versus what DBL saw then.',
+        questions: [
       '"What does a company look like today where the impact thesis is actually what creates the defensibility?"',
       '"Where do you see climate tech founder activity concentrating before the capital has followed?"',
       '"How has the definition of \'double bottom line\' shifted since you backed Tesla?"',
@@ -578,7 +587,8 @@ const HOST_INTEL = {
     topics: [],
     angle: 'YC is the highest-signal accelerator in the world. W26 batch surfaces the best early-stage companies of the year.',
     hook: 'Spotting the one company others will miss is the game. Come with a sector thesis.',
-    questions: [
+    icebreaker: 'YC social opener with anyone in the room: "which presentation surprised you the most?" Instant conversation starter. With YC staff: be precise on sector thesis — "excited about AI" won\'t land.',
+        questions: [
       '"What pattern have you seen in this batch that you didn\'t expect?"',
       '"Which sectors are the most technically ambitious founders gravitating toward right now?"',
       '"Where do you think YC is still underrepresented in terms of founder backgrounds or geographies?"',
@@ -592,7 +602,8 @@ const HOST_INTEL = {
     topics: ['longevity', 'health', 'brain', 'neuro', 'biotech', 'aging'],
     angle: 'Arnaud Auger is Director at Cathay Innovation ($2.7B AUM) and co-founder of Don\'t Die SF. Capital allocator and longevity practitioner — rare combination.',
     hook: 'Lead with founder signals in AI × longevity. Show you are tracking the space before it is obvious.',
-    questions: [
+    icebreaker: 'He tracks his own health data and has strong opinions on Bryan Johnson — ask his take. Or: what the Don\'t Die community has taught him about how founders think differently about their own health.',
+        questions: [
       '"What founder signals tell you something real is happening in a longevity vertical — before press catches it?"',
       '"Where is the biggest gap between what the science says is possible and what\'s actually being built?"',
       '"Is Don\'t Die SF surfacing founders you wouldn\'t see through traditional deal flow?"',
@@ -606,7 +617,8 @@ const HOST_INTEL = {
     topics: ['longevity', 'health', 'brain', 'neuro', 'ai', 'deep tech'],
     angle: 'Cathay Innovation ($2.7B AUM) has a real longevity thesis and global lens. Rare combination at this fund size.',
     hook: 'Lead with the intersection of AI and longevity biomarkers. Think in decades.',
-    questions: [
+    icebreaker: 'Cathay has a unique French-Chinese origin — backed partly by LVMH family office. Good opener: how the fund navigates US-China tech dynamics, or what European founders misunderstand about breaking into the US.',
+        questions: [
       '"How does Cathay\'s global LP base shape which longevity bets you take versus a purely US-focused fund?"',
       '"What does the longevity founder look like that gets you excited at the Series A stage?"',
       '"Where do you see AI making the biggest dent in the aging research pipeline?"',
@@ -620,7 +632,8 @@ const HOST_INTEL = {
     topics: ['longevity', 'health', 'brain', 'neuro', 'biotech'],
     angle: 'Don\'t Die SF is a longevity practitioner community — founders, investors, and scientists serious about the science.',
     hook: 'This crowd respects signal over story. Come with a specific observation, not a vision.',
-    questions: [
+    icebreaker: 'Everyone in the room personally tracks their health data. Opener: "what practice have you added recently that surprised you?" Almost universal answer — instant human connection before you get to work.',
+        questions: [
       '"What is the most underrated longevity intervention that doesn\'t have a company around it yet?"',
       '"Where do you see AI creating the most leverage in extending healthspan versus lifespan?"',
       '"What founder signal in this space would make you immediately pay attention?"',
@@ -634,7 +647,8 @@ const HOST_INTEL = {
     topics: ['climate', 'health', 'education', 'sustainability', 'impact'],
     angle: 'Obvious Ventures backs "world positive" companies — profit and planet aligned structurally.',
     hook: 'Mission must be load-bearing, not a differentiator.',
-    questions: [
+    icebreaker: 'If Ev Williams is there: ask what technology gets wrong about human behaviour — he built Twitter and Medium and thinks deeply about this. James Joaquin is more operational; ask about a portfolio surprise.',
+        questions: [
       '"How do you identify when a mission is structurally baked in versus bolted on?"',
       '"What impact vertical do you think is most underinvested relative to the urgency?"',
       '"Where are you seeing founder activity that the impact investing world hasn\'t priced in yet?"',
@@ -648,7 +662,8 @@ const HOST_INTEL = {
     topics: ['saas', 'consumer', 'community', 'b2b'],
     angle: 'Village Global is network-driven — peer cohorts over traditional VC hierarchy.',
     hook: 'Show you are a connector. Village bets on founders who attract other founders.',
-    questions: [
+    icebreaker: 'Erik Torenberg is a prolific writer and podcaster — check if he published something this week and reference it. Good opener: what does he think is the most underrated founder community in SF right now?',
+        questions: [
       '"How does the peer cohort model change which founders you see versus a traditional fund?"',
       '"What does \'network density\' look like as a signal for a company\'s early trajectory?"',
       '"Where do you see the most interesting founder communities forming right now outside of YC?"',
@@ -734,9 +749,14 @@ async function fetchEventBrief(eventName, eventHost) {
     // ── Build brief ───────────────────────────────────────────
     const points = []
 
-    // Point 1 — host context (always first if known)
+    // Point 1 — host context
     if (hostIntel) {
       points.push(`Host: ${hostIntel.angle} ${hostIntel.hook}`)
+    }
+
+    // Point 2 — icebreaker (if known)
+    if (hostIntel?.icebreaker) {
+      points.push(`Ice breaker: ${hostIntel.icebreaker}`)
     }
 
     if (hasDomainSignal) {
