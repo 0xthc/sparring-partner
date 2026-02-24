@@ -514,10 +514,10 @@ const HOST_INTEL = {
     topics: ['longevity', 'health', 'brain', 'neuro', 'biotech', 'aging'],
     angle: 'Arnaud Auger is Director at Cathay Innovation ($2.7B AUM) and co-founder of Don\'t Die SF. He is both a capital allocator and a longevity practitioner — rare combination.',
     hook: 'Lead with founder signals in AI × longevity — show you are tracking the space before it is obvious. Don\'t pitch reactively.',
-    talkingPoints: [
-      'Bryan Johnson\'s "Don\'t Die" has shifted longevity from biohacker niche to mainstream cultural moment — that legitimization is opening checkbooks. Ask Arnaud how he thinks about the gap between consumer longevity (supplements, wearables) and clinical-grade intervention.',
-      'Cognitive biomarkers are the new frontier: companies like Alto Neuroscience and Altoida are using AI to predict cognitive decline 10+ years early from blood + behavior data. This is the kind of pre-visibility signal worth watching — FDA pathways are opening.',
-      'Sleep × brain health is emerging as the wedge: the glymphatic system (brain\'s overnight cleaning mechanism) is now understood well enough to build products around. Oura, Whoop, and a dozen startups are racing to turn HRV data into cognitive health insights.',
+    questions: [
+      '"What founder signals tell you something real is happening in a longevity vertical — before the press catches it?"',
+      '"Where do you see the biggest gap between what the science says is possible and what\'s actually being built right now?"',
+      '"Is Don\'t Die SF surfacing founders you wouldn\'t see through traditional deal flow?"',
     ],
     posture: 'You are a VC scout with a signal edge, not a job seeker. Lead by sharing what you are seeing — "I\'ve been tracking early founder density in longevity AI, here\'s what stands out." Let the conversation do the work. If the topic of roles comes up, frame it as: "I am looking for a home where I can do this kind of sourcing at scale." Never ask about open positions directly.',
   },
@@ -639,9 +639,12 @@ async function fetchEventBrief(eventName, eventHost) {
       if (relevantThemes[1]) {
         points.push(`Pattern: "${relevantThemes[1].name}" — ${relevantThemes[1].builderCount} founders. Second convergence point in the same space.`)
       }
-    } else if (hostIntel?.talkingPoints?.length) {
-      // No domain signal in Precognition — use curated talking points
-      hostIntel.talkingPoints.slice(0, 2).forEach(tp => points.push(tp))
+    } else if (hostIntel?.topics?.length) {
+      // No domain signal in Precognition for this vertical — use the methodology as the angle
+      points.push(`No ${hostIntel.topics.slice(0,2).join(' / ')} signal in Precognition yet — this vertical isn't well-represented in the dataset. Your edge tonight is the methodology itself: you track pre-visibility founder density before the market sees it. Use that as the conversation starter, not a data point you don't have.`)
+      if (hostIntel?.questions?.length) {
+        points.push(`Questions to open with: ${hostIntel.questions.join(' / ')}`)
+      }
     } else {
       // Generic fallback — top sector flow
       if (hotSector) {
