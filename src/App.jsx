@@ -509,10 +509,17 @@ const HOST_INTEL = {
   },
   'arnaud auger': {
     gp: 'Arnaud Auger',
-    focus: 'AI, deep tech, longevity, neurotech, global expansion',
+    focus: 'AI, deep tech, longevity, neurotech, cognitive health',
     stage: 'Series A–C',
-    angle: 'Arnaud Auger is Director at Cathay Innovation ($2.7B AUM) and co-founder of Don\'t Die SF. He is both a capital allocator and a longevity practitioner — rare combination. He invests in AI globally but his personal obsession is cognitive health and lifespan extension.',
-    hook: 'Lead with the founder signal in AI × longevity — that intersection is exactly where he is placing bets right now. Don\'t pitch reactively; show you are tracking the space before it is obvious.',
+    topics: ['longevity', 'health', 'brain', 'neuro', 'biotech', 'aging'],
+    angle: 'Arnaud Auger is Director at Cathay Innovation ($2.7B AUM) and co-founder of Don\'t Die SF. He is both a capital allocator and a longevity practitioner — rare combination.',
+    hook: 'Lead with founder signals in AI × longevity — show you are tracking the space before it is obvious. Don\'t pitch reactively.',
+    talkingPoints: [
+      'Bryan Johnson\'s "Don\'t Die" has shifted longevity from biohacker niche to mainstream cultural moment — that legitimization is opening checkbooks. Ask Arnaud how he thinks about the gap between consumer longevity (supplements, wearables) and clinical-grade intervention.',
+      'Cognitive biomarkers are the new frontier: companies like Alto Neuroscience and Altoida are using AI to predict cognitive decline 10+ years early from blood + behavior data. This is the kind of pre-visibility signal worth watching — FDA pathways are opening.',
+      'Sleep × brain health is emerging as the wedge: the glymphatic system (brain\'s overnight cleaning mechanism) is now understood well enough to build products around. Oura, Whoop, and a dozen startups are racing to turn HRV data into cognitive health insights.',
+    ],
+    posture: 'You are a VC scout with a signal edge, not a job seeker. Lead by sharing what you are seeing — "I\'ve been tracking early founder density in longevity AI, here\'s what stands out." Let the conversation do the work. If the topic of roles comes up, frame it as: "I am looking for a home where I can do this kind of sourcing at scale." Never ask about open positions directly.',
   },
   'cathay innovation': {
     gp: 'Arnaud Auger',
@@ -603,38 +610,52 @@ async function fetchEventBrief(eventName, eventHost) {
     // ── Host intel ────────────────────────────────────────────
     const hostIntel = getHostIntel(eventHost)
 
+    // ── Check if Precognition has domain-relevant themes ──────
+    const hostTopics = hostIntel?.topics || []
+    const relevantThemes = hostTopics.length > 0
+      ? topThemes.filter(t => hostTopics.some(topic => t.name.toLowerCase().includes(topic) || (t.sector || '').toLowerCase().includes(topic)))
+      : displayThemes
+    const hasDomainSignal = relevantThemes.length >= 2
+
     // ── Build brief ───────────────────────────────────────────
     const points = []
 
-    // Point 1 — host context (if known)
+    // Point 1 — host context (always first if known)
     if (hostIntel) {
-      points.push(`Host: ${eventHost}${hostIntel.gp ? ` (${hostIntel.gp})` : ''} — ${hostIntel.angle} ${hostIntel.hook}`)
+      points.push(`Host: ${hostIntel.angle} ${hostIntel.hook}`)
     }
 
-    // Point 2 — top pattern (filtered for host focus if possible)
-    if (displayThemes[0]) {
-      points.push(`Pattern: "${displayThemes[0].name}" is the sharpest cluster this week — ${displayThemes[0].builderCount} founders converging independently. Early signal, not yet visible in press.`)
+    if (hasDomainSignal) {
+      // Precognition has relevant data — show it
+      points.push(`Pattern: "${relevantThemes[0].name}" is the sharpest cluster in this domain — ${relevantThemes[0].builderCount} founders building independently. Early signal, not yet visible in press.`)
+      if (relevantThemes[1]) {
+        points.push(`Pattern: "${relevantThemes[1].name}" — ${relevantThemes[1].builderCount} founders. Second convergence point in the same space.`)
+      }
+    } else if (hostIntel?.talkingPoints?.length) {
+      // No domain signal in Precognition — use curated talking points
+      hostIntel.talkingPoints.slice(0, 2).forEach(tp => points.push(tp))
+    } else {
+      // Generic fallback — top sector flow
+      if (hotSector) {
+        points.push(`Flow: ${hotSector[0]} is the most active sector right now — ${hotSector[1].founders} founders across ${hotSector[1].count} clusters. Capital follows founder density by 3–6 months.`)
+      }
+      if (displayThemes[0]) {
+        points.push(`Pattern: "${displayThemes[0].name}" — ${displayThemes[0].builderCount} founders converging. Strongest cluster this week.`)
+      }
     }
 
-    // Point 3 — flow: hottest sector
-    if (hotSector) {
-      points.push(`Flow: ${hotSector[0]} is the most active sector right now — ${hotSector[1].founders} founders across ${hotSector[1].count} clusters. Capital follows founder density by 3–6 months.`)
-    }
-
-    // Point 4 — flow second wave or second pattern
-    if (risingSector && risingSector[0] !== hotSector?.[0]) {
-      points.push(`Flow: ${risingSector[0]} is accelerating as a second wave — ${risingSector[1].founders} founders, ${risingSector[1].count} distinct clusters. Contrarian signal worth naming.`)
-    } else if (displayThemes[1]) {
-      points.push(`Pattern: "${displayThemes[1].name}" — ${displayThemes[1].builderCount} founders. Second data point on where builders are concentrating before market visibility.`)
-    }
-
-    // Point 4 — break/inflection
+    // Break signal — always relevant
     if (recentBreak) {
       const founderLabel = recentBreak.founderName || recentBreak.founderHandle || 'A tracked founder'
-      points.push(`Break: ${founderLabel} — ${recentBreak.signal || 'crossed a momentum threshold this week'}. This is the type of pre-visibility signal Precognition surfaces before it hits press.`)
+      points.push(`Signal: ${founderLabel} — ${recentBreak.signal || 'crossed a momentum threshold this week'}. Pre-visibility signal from Precognition.`)
     }
 
-    return points.slice(0, 4)
+    // Posture — always last if host intel has it
+    if (hostIntel?.posture) {
+      points.push(`Posture: ${hostIntel.posture}`)
+    }
+
+    return points.slice(0, 5)
   } catch (e) {
     return ['Precognition data unavailable — check your connection to the intelligence backend.']
   }
