@@ -432,6 +432,55 @@ function TerrainTab() {
   )
 }
 
+const PRECOGNITION_API = 'https://yc-scout.onrender.com'
+
+async function fetchEventBrief(eventName, eventHost) {
+  try {
+    const [themesRes, breaksRes] = await Promise.all([
+      fetch(`${PRECOGNITION_API}/api/themes`),
+      fetch(`${PRECOGNITION_API}/api/emergence`),
+    ])
+    const themes = await themesRes.json()
+    const breaks = await breaksRes.json()
+
+    const topThemes = themes
+      .sort((a, b) => b.emergenceScore - a.emergenceScore)
+      .slice(0, 5)
+
+    const recentBreaks = (breaks || []).slice(0, 3)
+
+    const hostLower = (eventHost || '').toLowerCase()
+    const isConsumer = ['forerunner', 'imaginary', 'lita', 'consumer'].some(k => hostLower.includes(k))
+    const isInfra = ['a16z', 'sequoia', 'benchmark', 'infrastructure'].some(k => hostLower.includes(k))
+
+    const relevantThemes = isConsumer
+      ? topThemes.filter(t => /consumer|e-commerce|retail|brand|food|culinary/i.test(t.name))
+      : isInfra
+      ? topThemes.filter(t => /infra|data|security|developer|devtools/i.test(t.name))
+      : topThemes
+
+    const displayThemes = (relevantThemes.length >= 2 ? relevantThemes : topThemes).slice(0, 3)
+
+    const points = []
+
+    if (displayThemes[0]) {
+      points.push(`${displayThemes[0].name} is the strongest emerging cluster right now — ${displayThemes[0].builderCount} founders converging independently. Strong talking point if the space comes up.`)
+    }
+    if (displayThemes[1]) {
+      points.push(`${displayThemes[1].name} is also accelerating (${displayThemes[1].builderCount} builders). Worth mentioning as a second data point on where early-stage activity is concentrating.`)
+    }
+    if (recentBreaks[0]) {
+      points.push(`Fresh signal this week: ${recentBreaks[0].signal || recentBreaks[0].founderName + ' just crossed a momentum threshold'}. Good example of the type of pre-visibility signal Precognition surfaces.`)
+    } else if (displayThemes[2]) {
+      points.push(`${displayThemes[2].name} — ${displayThemes[2].builderCount} founders, early stage. An outlier pattern worth watching if you want to show range.`)
+    }
+
+    return points
+  } catch (e) {
+    return ['Precognition data unavailable — check your connection to the intelligence backend.']
+  }
+}
+
 function TerrainEventCard({
   event,
   expanded,
@@ -445,6 +494,8 @@ function TerrainEventCard({
 }) {
   const [goalDraft, setGoalDraft] = useState(event.goal || '')
   const [notesDraft, setNotesDraft] = useState(event.notes || '')
+  const [brief, setBrief] = useState(null)
+  const [briefLoading, setBriefLoading] = useState(false)
 
   useEffect(() => {
     setGoalDraft(event.goal || '')
@@ -494,7 +545,15 @@ function TerrainEventCard({
             <button
               key={status}
               className={`status-pill ${statusPillClass(status)} ${event.status === status ? 'active' : ''}`}
-              onClick={() => onUpdateStatus(event.id, status)}
+              onClick={async () => {
+                onUpdateStatus(event.id, status)
+                if (status === 'Going' && !brief) {
+                  setBriefLoading(true)
+                  const points = await fetchEventBrief(event.name, event.host)
+                  setBrief(points)
+                  setBriefLoading(false)
+                }
+              }}
               type="button"
             >
               {status}
@@ -528,6 +587,37 @@ function TerrainEventCard({
 
       {expanded && (
         <div className="terrain-expanded">
+
+          {(event.status === 'Going' || brief || briefLoading) && (
+            <div className="event-brief">
+              <div className="event-brief-title">Insider brief — what to bring</div>
+              {briefLoading && (
+                <div style={{ fontSize: 12, color: '#aaa', fontStyle: 'italic' }}>Pulling signals from Precognition...</div>
+              )}
+              {brief && brief.map((point, i) => (
+                <div key={i} className="event-brief-point">
+                  <span className="brief-num">{i + 1}</span>
+                  <span>{point}</span>
+                </div>
+              ))}
+              {!brief && !briefLoading && event.status === 'Going' && (
+                <button
+                  className="btn btn-light"
+                  style={{ fontSize: 11, padding: '4px 10px' }}
+                  onClick={async () => {
+                    setBriefLoading(true)
+                    const points = await fetchEventBrief(event.name, event.host)
+                    setBrief(points)
+                    setBriefLoading(false)
+                  }}
+                  type="button"
+                >
+                  Generate brief
+                </button>
+              )}
+            </div>
+          )}
+
           <label>
             Notes
             <textarea

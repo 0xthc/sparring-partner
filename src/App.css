@@ -823,3 +823,45 @@ tbody tr:last-child td {
     grid-column: span 1;
   }
 }
+
+/* Event brief */
+.event-brief {
+  background: #f8f8f6;
+  border: 1px solid #e8e8e5;
+  border-left: 3px solid #1a1a1a;
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.event-brief-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 10px;
+}
+.event-brief-point {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #1a1a1a;
+  line-height: 1.5;
+  align-items: flex-start;
+}
+.event-brief-point:last-child { margin-bottom: 0; }
+.brief-num {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
