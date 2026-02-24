@@ -784,8 +784,13 @@ async function fetchEventBrief(eventName, eventHost) {
     const questions = hostIntel?.questions?.length ? hostIntel.questions : DEFAULT_QUESTIONS
     points.push(`Questions to open with:\n${questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}`)
 
-    // Break signal
-    if (recentBreak) {
+    // Break signal — only show if domain-relevant or no domain filter
+    const breakIsRelevant = !hostTopics.length || (() => {
+      if (!recentBreak) return false
+      const breakContext = ((recentBreak.founderName || '') + ' ' + (recentBreak.signal || '')).toLowerCase()
+      return hostTopics.some(t => breakContext.includes(t))
+    })()
+    if (recentBreak && breakIsRelevant) {
       const founderLabel = recentBreak.founderName || recentBreak.founderHandle || 'A tracked founder'
       points.push(`Live signal: ${founderLabel} — ${recentBreak.signal || 'crossed a momentum threshold this week'}. Pre-visibility from Precognition.`)
     }
