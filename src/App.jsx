@@ -12,16 +12,49 @@ const PRIORITY_OPTIONS = [
   { label: 'Medium', value: 'med' },
   { label: 'Low', value: 'low' },
 ]
+const CONTACT_TYPE_OPTIONS = ['Investor', 'Founder', 'Operator', 'Met at event', 'Intro']
+const TERRAIN_STATUS_OPTIONS = ['Going', 'Maybe', 'Pass']
+const TERRAIN_FILTERS = [
+  'All',
+  ...TERRAIN_STATUS_OPTIONS,
+  'Conference',
+  'Dinner',
+  'Demo Day',
+  'Community',
+]
+const EVENT_TYPE_OPTIONS = ['Conference', 'Dinner', 'Demo Day', 'Community', 'Happy Hour', 'Other']
 
 const initialForm = {
   name: '',
   title: '',
   fund: '',
+  type: 'Investor',
   stage: '',
   how_met: '',
   last_contact: '',
   status: 'To reach',
   priority: 'med',
+  notes: '',
+}
+
+const initialEventForm = {
+  name: '',
+  date: '',
+  location: '',
+  host: '',
+  type: 'Conference',
+  status: 'Maybe',
+  goal: '',
+  notes: '',
+  source_url: '',
+}
+
+const initialFieldNoteForm = {
+  name: '',
+  fund: '',
+  title: '',
+  insight: '',
+  followUp: '',
   notes: '',
 }
 
@@ -54,12 +87,7 @@ function App() {
           subtitle="Coming soon — fund portfolio tracking, investment signals, sector heat maps."
         />
       )}
-      {activeTab === 'Terrain' && (
-        <PlaceholderTab
-          title="Terrain"
-          subtitle="Coming soon — SF VC event calendar, who's attending, field notes and follow-ups."
-        />
-      )}
+      {activeTab === 'Terrain' && <TerrainTab />}
     </div>
   )
 }
@@ -83,6 +111,613 @@ function PlaceholderTab({ title, subtitle }) {
   )
 }
 
+function TerrainTab() {
+  const [events, setEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [filter, setFilter] = useState('All')
+  const [expandedIds, setExpandedIds] = useState([])
+  const [goalEditing, setGoalEditing] = useState({})
+  const [eventModalOpen, setEventModalOpen] = useState(false)
+  const [eventForm, setEventForm] = useState(initialEventForm)
+  const [fieldNoteEvent, setFieldNoteEvent] = useState(null)
+  const [fieldNoteForm, setFieldNoteForm] = useState(initialFieldNoteForm)
+  const [flashMessage, setFlashMessage] = useState('')
+  const [showPast, setShowPast] = useState(false)
+
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
+  useEffect(() => {
+    if (!flashMessage) return undefined
+    const timer = setTimeout(() => setFlashMessage(''), 2500)
+    return () => clearTimeout(timer)
+  }, [flashMessage])
+
+  const sortedEvents = useMemo(() => {
+    return [...events].sort((a, b) => {
+      const aTime = a.date ? new Date(`${a.date}T00:00:00`).getTime() : Number.MAX_SAFE_INTEGER
+      const bTime = b.date ? new Date(`${b.date}T00:00:00`).getTime() : Number.MAX_SAFE_INTEGER
+      return aTime - bTime
+    })
+  }, [events])
+
+  const today = useMemo(() => startOfDay(new Date()), [])
+
+  const stats = useMemo(() => {
+    const nextWeek = addDays(today, 7)
+    let upcoming = 0
+    let going = 0
+    let thisWeek = 0
+
+    for (const event of events) {
+      const eventDate = event.date ? startOfDay(new Date(`${event.date}T00:00:00`)) : null
+      if (!eventDate) continue
+
+      if ((event.status === 'Going' || event.status === 'Maybe') && eventDate.getTime() >= today.getTime()) {
+        upcoming += 1
+      }
+      if (event.status === 'Going') {
+        going += 1
+      }
+      if (eventDate.getTime() >= today.getTime() && eventDate.getTime() <= nextWeek.getTime()) {
+        thisWeek += 1
+      }
+    }
+
+    return { upcoming, going, thisWeek }
+  }, [events, today])
+
+  const filteredEvents = useMemo(() => {
+    if (filter === 'All') return sortedEvents
+    if (TERRAIN_STATUS_OPTIONS.includes(filter)) {
+      return sortedEvents.filter((event) => event.status === filter)
+    }
+    return sortedEvents.filter((event) => event.type === filter)
+  }, [filter, sortedEvents])
+
+  const [upcomingEvents, pastEvents] = useMemo(() => {
+    const future = []
+    const past = []
+
+    for (const event of filteredEvents) {
+      const eventDate = event.date ? startOfDay(new Date(`${event.date}T00:00:00`)) : null
+      if (!eventDate || eventDate.getTime() >= today.getTime()) {
+        future.push(event)
+      } else {
+        past.push(event)
+      }
+    }
+
+    return [future, past]
+  }, [filteredEvents, today])
+
+  async function fetchEvents() {
+    setLoading(true)
+    setError('')
+
+    const { data, error: fetchError } = await supabase
+      .from('events')
+      .select('*')
+      .order('date', { ascending: true })
+
+    if (fetchError) {
+      setError(fetchError.message)
+      setEvents([])
+    } else {
+      setEvents(data ?? [])
+    }
+
+    setLoading(false)
+  }
+
+  function openEventModal() {
+    setEventForm(initialEventForm)
+    setEventModalOpen(true)
+  }
+
+  async function saveEvent(event) {
+    event.preventDefault()
+    if (!eventForm.name.trim()) return
+
+    const payload = {
+      name: eventForm.name.trim(),
+      date: eventForm.date || null,
+      location: eventForm.location.trim() || null,
+      host: eventForm.host.trim() || null,
+      type: eventForm.type || null,
+      status: eventForm.status || 'Maybe',
+      goal: eventForm.goal.trim() || null,
+      notes: eventForm.notes.trim() || null,
+      source_url: eventForm.source_url.trim() || null,
+      source: 'manual',
+    }
+
+    const { error: insertError } = await supabase.from('events').insert(payload)
+    if (insertError) {
+      setError(insertError.message)
+      return
+    }
+
+    setEventModalOpen(false)
+    setEventForm(initialEventForm)
+    await fetchEvents()
+  }
+
+  async function updateEventStatus(eventId, status) {
+    const { error: updateError } = await supabase.from('events').update({ status }).eq('id', eventId)
+    if (updateError) {
+      setError(updateError.message)
+      return
+    }
+
+    setEvents((prev) => prev.map((event) => (event.id === eventId ? { ...event, status } : event)))
+  }
+
+  async function updateEventGoal(eventId, goal) {
+    const { error: updateError } = await supabase.from('events').update({ goal: goal || null }).eq('id', eventId)
+    if (updateError) {
+      setError(updateError.message)
+      return
+    }
+
+    setEvents((prev) => prev.map((event) => (event.id === eventId ? { ...event, goal } : event)))
+  }
+
+  async function updateEventNotes(eventId, notes) {
+    const { error: updateError } = await supabase.from('events').update({ notes: notes || null }).eq('id', eventId)
+    if (updateError) {
+      setError(updateError.message)
+      return
+    }
+
+    setEvents((prev) => prev.map((event) => (event.id === eventId ? { ...event, notes } : event)))
+  }
+
+  function toggleExpanded(eventId) {
+    setExpandedIds((prev) =>
+      prev.includes(eventId) ? prev.filter((id) => id !== eventId) : [...prev, eventId],
+    )
+  }
+
+  function openFieldNoteModal(terrainEvent) {
+    setFieldNoteEvent(terrainEvent)
+    setFieldNoteForm(initialFieldNoteForm)
+  }
+
+  async function saveFieldNote(event) {
+    event.preventDefault()
+    if (!fieldNoteEvent) return
+
+    const meetingDate = fieldNoteEvent.date ? formatIsoAsReadable(fieldNoteEvent.date) : 'unknown date'
+    const noteParts = [
+      `Met at ${fieldNoteEvent.name} on ${meetingDate}.`,
+      `Insight: ${fieldNoteForm.insight.trim() || '—'}.`,
+      `Follow-up: ${fieldNoteForm.followUp.trim() || '—'}.`,
+    ]
+
+    if (fieldNoteForm.notes.trim()) {
+      noteParts.push(`Notes: ${fieldNoteForm.notes.trim()}`)
+    }
+
+    const payload = {
+      name: fieldNoteForm.name.trim() || 'Unknown',
+      title: fieldNoteForm.title.trim() || null,
+      fund: fieldNoteForm.fund.trim() || null,
+      type: 'Met at event',
+      status: 'To reach',
+      notes: noteParts.join(' '),
+      how_met: fieldNoteEvent.name,
+    }
+
+    const { error: insertError } = await supabase.from('contacts').insert(payload)
+    if (insertError) {
+      setError(insertError.message)
+      return
+    }
+
+    setFieldNoteEvent(null)
+    setFieldNoteForm(initialFieldNoteForm)
+    setFlashMessage('Contact added to Network')
+  }
+
+  return (
+    <section className="outreach-wrap terrain-wrap">
+      <div className="outreach-header">
+        <h1>Terrain · San Francisco</h1>
+        <button className="btn btn-dark" onClick={openEventModal} type="button">
+          + Add event
+        </button>
+      </div>
+
+      <div className="stats-grid terrain-stats-grid">
+        <StatCard label="Upcoming events" value={stats.upcoming} />
+        <StatCard label="Going" value={stats.going} />
+        <StatCard label="This week" value={stats.thisWeek} />
+      </div>
+
+      <div className="filter-row">
+        {TERRAIN_FILTERS.map((value) => (
+          <button
+            key={value}
+            className={`filter-pill ${filter === value ? 'active' : ''}`}
+            onClick={() => setFilter(value)}
+            type="button"
+          >
+            {value}
+          </button>
+        ))}
+      </div>
+
+      {flashMessage && <div className="flash-message">{flashMessage}</div>}
+
+      {loading ? (
+        <div className="state-card">Loading...</div>
+      ) : error ? (
+        <div className="state-card error">{error}</div>
+      ) : filteredEvents.length === 0 ? (
+        <div className="state-card">No events yet. Add your first one.</div>
+      ) : (
+        <div className="terrain-list">
+          {upcomingEvents.map((terrainEvent) => (
+            <TerrainEventCard
+              key={terrainEvent.id}
+              event={terrainEvent}
+              expanded={expandedIds.includes(terrainEvent.id)}
+              goalEditing={goalEditing[terrainEvent.id] || false}
+              onToggleExpanded={() => toggleExpanded(terrainEvent.id)}
+              onSetGoalEditing={(editing) =>
+                setGoalEditing((prev) => ({
+                  ...prev,
+                  [terrainEvent.id]: editing,
+                }))
+              }
+              onUpdateGoal={updateEventGoal}
+              onUpdateNotes={updateEventNotes}
+              onUpdateStatus={updateEventStatus}
+              onAddFieldNote={() => openFieldNoteModal(terrainEvent)}
+            />
+          ))}
+
+          {pastEvents.length > 0 && (
+            <div className="past-events-wrap">
+              <button className="past-toggle" onClick={() => setShowPast((prev) => !prev)} type="button">
+                {showPast ? 'Hide' : 'Show'} past events ({pastEvents.length})
+              </button>
+              {showPast &&
+                pastEvents.map((terrainEvent) => (
+                  <TerrainEventCard
+                    key={terrainEvent.id}
+                    event={terrainEvent}
+                    expanded={expandedIds.includes(terrainEvent.id)}
+                    goalEditing={goalEditing[terrainEvent.id] || false}
+                    onToggleExpanded={() => toggleExpanded(terrainEvent.id)}
+                    onSetGoalEditing={(editing) =>
+                      setGoalEditing((prev) => ({
+                        ...prev,
+                        [terrainEvent.id]: editing,
+                      }))
+                    }
+                    onUpdateGoal={updateEventGoal}
+                    onUpdateNotes={updateEventNotes}
+                    onUpdateStatus={updateEventStatus}
+                    onAddFieldNote={() => openFieldNoteModal(terrainEvent)}
+                  />
+                ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {eventModalOpen && (
+        <AddEventModal
+          form={eventForm}
+          onCancel={() => setEventModalOpen(false)}
+          onChange={setEventForm}
+          onSave={saveEvent}
+        />
+      )}
+
+      {fieldNoteEvent && (
+        <FieldNoteModal
+          terrainEvent={fieldNoteEvent}
+          form={fieldNoteForm}
+          onCancel={() => setFieldNoteEvent(null)}
+          onChange={setFieldNoteForm}
+          onSave={saveFieldNote}
+        />
+      )}
+    </section>
+  )
+}
+
+function TerrainEventCard({
+  event,
+  expanded,
+  goalEditing,
+  onToggleExpanded,
+  onSetGoalEditing,
+  onUpdateGoal,
+  onUpdateNotes,
+  onUpdateStatus,
+  onAddFieldNote,
+}) {
+  const [goalDraft, setGoalDraft] = useState(event.goal || '')
+  const [notesDraft, setNotesDraft] = useState(event.notes || '')
+
+  useEffect(() => {
+    setGoalDraft(event.goal || '')
+  }, [event.goal])
+
+  useEffect(() => {
+    setNotesDraft(event.notes || '')
+  }, [event.notes])
+
+  async function saveGoal() {
+    onSetGoalEditing(false)
+    await onUpdateGoal(event.id, goalDraft.trim())
+  }
+
+  async function saveNotes() {
+    await onUpdateNotes(event.id, notesDraft.trim())
+  }
+
+  return (
+    <article className="terrain-card">
+      <button className="terrain-main" onClick={onToggleExpanded} type="button">
+        <div className="terrain-date">{formatTerrainDate(event.date)}</div>
+        <div className="terrain-main-center">
+          <div className="terrain-title-row">
+            <strong>{event.name || 'Untitled event'}</strong>
+            <span className={`event-type-badge ${eventTypeClass(event.type)}`}>{event.type || 'Other'}</span>
+          </div>
+          <p>{event.host || 'Host not listed'}</p>
+          <small>{event.location || 'Location TBD'}</small>
+        </div>
+      </button>
+
+      <div className="terrain-side">
+        <div className="terrain-status-pills">
+          {TERRAIN_STATUS_OPTIONS.map((status) => (
+            <button
+              key={status}
+              className={`status-pill ${statusPillClass(status)} ${event.status === status ? 'active' : ''}`}
+              onClick={() => onUpdateStatus(event.id, status)}
+              type="button"
+            >
+              {status}
+            </button>
+          ))}
+        </div>
+
+        <div className="goal-inline">
+          <span className="goal-label">Goal</span>
+          {goalEditing ? (
+            <input
+              autoFocus
+              type="text"
+              value={goalDraft}
+              onChange={(inputEvent) => setGoalDraft(inputEvent.target.value)}
+              onBlur={saveGoal}
+              onKeyDown={(keyboardEvent) => {
+                if (keyboardEvent.key === 'Enter') {
+                  keyboardEvent.preventDefault()
+                  saveGoal()
+                }
+              }}
+            />
+          ) : (
+            <button className="goal-value" onClick={() => onSetGoalEditing(true)} type="button">
+              {event.goal || 'Add goal'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="terrain-expanded">
+          <label>
+            Notes
+            <textarea
+              rows="4"
+              value={notesDraft}
+              onChange={(inputEvent) => setNotesDraft(inputEvent.target.value)}
+              onBlur={saveNotes}
+            />
+          </label>
+          <button className="btn btn-light" onClick={onAddFieldNote} type="button">
+            Add field note
+          </button>
+        </div>
+      )}
+    </article>
+  )
+}
+
+function AddEventModal({ form, onCancel, onChange, onSave }) {
+  return (
+    <div className="modal-overlay" onClick={onCancel} role="presentation">
+      <div className="modal-card" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+        <h3>Add event</h3>
+        <form onSubmit={onSave}>
+          <div className="modal-grid">
+            <label>
+              Name *
+              <input
+                required
+                type="text"
+                value={form.name}
+                onChange={(event) => onChange((prev) => ({ ...prev, name: event.target.value }))}
+              />
+            </label>
+            <label>
+              Date
+              <input
+                type="date"
+                value={form.date}
+                onChange={(event) => onChange((prev) => ({ ...prev, date: event.target.value }))}
+              />
+            </label>
+            <label>
+              Location
+              <input
+                type="text"
+                value={form.location}
+                onChange={(event) => onChange((prev) => ({ ...prev, location: event.target.value }))}
+              />
+            </label>
+            <label>
+              Host
+              <input
+                type="text"
+                value={form.host}
+                onChange={(event) => onChange((prev) => ({ ...prev, host: event.target.value }))}
+              />
+            </label>
+            <label>
+              Type
+              <select
+                value={form.type}
+                onChange={(event) => onChange((prev) => ({ ...prev, type: event.target.value }))}
+              >
+                {EVENT_TYPE_OPTIONS.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Status
+              <select
+                value={form.status}
+                onChange={(event) => onChange((prev) => ({ ...prev, status: event.target.value }))}
+              >
+                {TERRAIN_STATUS_OPTIONS.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Goal
+              <input
+                type="text"
+                value={form.goal}
+                onChange={(event) => onChange((prev) => ({ ...prev, goal: event.target.value }))}
+              />
+            </label>
+            <label>
+              Source URL
+              <input
+                type="url"
+                value={form.source_url}
+                onChange={(event) => onChange((prev) => ({ ...prev, source_url: event.target.value }))}
+              />
+            </label>
+            <label className="full-width">
+              Notes
+              <textarea
+                rows="4"
+                value={form.notes}
+                onChange={(event) => onChange((prev) => ({ ...prev, notes: event.target.value }))}
+              />
+            </label>
+          </div>
+
+          <div className="modal-actions">
+            <div className="modal-actions-right">
+              <button className="btn btn-light" onClick={onCancel} type="button">
+                Cancel
+              </button>
+              <button className="btn btn-dark" type="submit">
+                Save
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function FieldNoteModal({ terrainEvent, form, onCancel, onChange, onSave }) {
+  return (
+    <div className="modal-overlay" onClick={onCancel} role="presentation">
+      <div className="modal-card" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+        <h3>Field Note — {terrainEvent.name}</h3>
+        <form onSubmit={onSave}>
+          <div className="modal-grid">
+            <label>
+              Name
+              <input
+                type="text"
+                value={form.name}
+                onChange={(event) => onChange((prev) => ({ ...prev, name: event.target.value }))}
+              />
+            </label>
+            <label>
+              Fund/Company
+              <input
+                type="text"
+                value={form.fund}
+                onChange={(event) => onChange((prev) => ({ ...prev, fund: event.target.value }))}
+              />
+            </label>
+            <label>
+              Title
+              <input
+                type="text"
+                value={form.title}
+                onChange={(event) => onChange((prev) => ({ ...prev, title: event.target.value }))}
+              />
+            </label>
+            <label className="full-width">
+              One insight
+              <textarea
+                rows="3"
+                placeholder="What did you learn?"
+                value={form.insight}
+                onChange={(event) => onChange((prev) => ({ ...prev, insight: event.target.value }))}
+              />
+            </label>
+            <label className="full-width">
+              Follow-up action
+              <input
+                type="text"
+                placeholder="Send intro email, connect on LinkedIn..."
+                value={form.followUp}
+                onChange={(event) => onChange((prev) => ({ ...prev, followUp: event.target.value }))}
+              />
+            </label>
+            <label className="full-width">
+              Notes
+              <textarea
+                rows="4"
+                value={form.notes}
+                onChange={(event) => onChange((prev) => ({ ...prev, notes: event.target.value }))}
+              />
+            </label>
+          </div>
+
+          <div className="modal-actions">
+            <div className="modal-actions-right">
+              <button className="btn btn-light" onClick={onCancel} type="button">
+                Cancel
+              </button>
+              <button className="btn btn-dark" type="submit">
+                Save
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 function OutreachTab() {
   /*
   create table contacts (
@@ -91,6 +726,7 @@ function OutreachTab() {
     title text,
     fund text,
     stage text,
+    type text default 'Investor',
     how_met text,
     last_contact date,
     status text default 'To reach',
@@ -172,6 +808,7 @@ function OutreachTab() {
       name: contact.name ?? '',
       title: contact.title ?? '',
       fund: contact.fund ?? '',
+      type: contact.type ?? 'Investor',
       stage: contact.stage ?? '',
       how_met: contact.how_met ?? '',
       last_contact: contact.last_contact ?? '',
@@ -191,6 +828,7 @@ function OutreachTab() {
       name: form.name.trim(),
       title: form.title.trim() || null,
       fund: form.fund.trim() || null,
+      type: form.type || 'Investor',
       stage: form.stage || null,
       how_met: form.how_met.trim() || null,
       last_contact: form.last_contact || null,
@@ -324,6 +962,7 @@ function OutreachTable({ contacts, onEdit }) {
             <th>Priority</th>
             <th>Name</th>
             <th>Fund</th>
+            <th>Type</th>
             <th>Stage</th>
             <th>How we met</th>
             <th>Last contact</th>
@@ -345,6 +984,9 @@ function OutreachTable({ contacts, onEdit }) {
                 </div>
               </td>
               <td>{contact.fund || '—'}</td>
+              <td>
+                <TypeBadge type={contact.type} />
+              </td>
               <td>
                 {contact.stage ? (
                   <span className={`stage-badge ${stageClass(contact.stage)}`}>{contact.stage}</span>
@@ -442,6 +1084,19 @@ function ContactModal({ editing, form, onCancel, onChange, onDelete, onSave }) {
                 value={form.fund}
                 onChange={(event) => onChange((prev) => ({ ...prev, fund: event.target.value }))}
               />
+            </label>
+            <label>
+              Type
+              <select
+                value={form.type}
+                onChange={(event) => onChange((prev) => ({ ...prev, type: event.target.value }))}
+              >
+                {CONTACT_TYPE_OPTIONS.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
             </label>
             <label>
               Stage
@@ -578,6 +1233,18 @@ function StatusBadge({ status }) {
   )
 }
 
+function TypeBadge({ type }) {
+  const map = {
+    Investor: 'type-investor',
+    Founder: 'type-founder',
+    Operator: 'type-operator',
+    'Met at event': 'type-met-event',
+    Intro: 'type-intro',
+  }
+
+  return <span className={`type-badge ${map[type] || 'type-investor'}`}>{type || 'Investor'}</span>
+}
+
 function priorityClass(priority) {
   if (priority === 'high') return 'priority-high'
   if (priority === 'low') return 'priority-low'
@@ -600,9 +1267,49 @@ function contactAgeClass(lastContact) {
   return 'age-old'
 }
 
+function eventTypeClass(type) {
+  if (type === 'Conference') return 'event-type-conference'
+  if (type === 'Dinner') return 'event-type-dinner'
+  if (type === 'Demo Day') return 'event-type-demo-day'
+  if (type === 'Community') return 'event-type-community'
+  if (type === 'Happy Hour') return 'event-type-happy-hour'
+  return 'event-type-other'
+}
+
+function statusPillClass(status) {
+  if (status === 'Going') return 'status-pill-going'
+  if (status === 'Maybe') return 'status-pill-maybe'
+  return 'status-pill-pass'
+}
+
 function formatDate(date) {
   if (!date) return '—'
   return new Date(date).toLocaleDateString()
+}
+
+function formatTerrainDate(date) {
+  if (!date) return 'TBD'
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function formatIsoAsReadable(date) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+function startOfDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+function addDays(date, days) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days)
 }
 
 function daysSince(dateString) {
