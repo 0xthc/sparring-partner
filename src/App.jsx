@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { supabase } from './supabase'
 
-const TABS = ['Precognition', 'Outreach', 'Market Pulse', 'Events']
+const TABS = ['Precognition', 'Flow', 'Network', 'Terrain']
 const STATUS_ORDER = ['To reach', 'Reached out', 'Replied', 'Meeting', 'Following up', 'Pass']
 const ALL_FILTERS = ['All', ...STATUS_ORDER]
 const STAGE_OPTIONS = ['Pre-seed', 'Seed', 'Series A', 'Growth']
@@ -26,7 +26,7 @@ const initialForm = {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState('Outreach')
+  const [activeTab, setActiveTab] = useState('Precognition')
 
   return (
     <div className="app-shell">
@@ -47,17 +47,17 @@ function App() {
       </nav>
 
       {activeTab === 'Precognition' && <PrecognitionTab />}
-      {activeTab === 'Outreach' && <OutreachTab />}
-      {activeTab === 'Market Pulse' && (
+      {activeTab === 'Network' && <OutreachTab />}
+      {activeTab === 'Flow' && (
         <PlaceholderTab
-          title="Market Pulse"
+          title="Flow"
           subtitle="Coming soon — fund portfolio tracking, investment signals, sector heat maps."
         />
       )}
-      {activeTab === 'Events' && (
+      {activeTab === 'Terrain' && (
         <PlaceholderTab
-          title="Events"
-          subtitle="Coming soon — SF VC event calendar, attendee tracking, meeting prep."
+          title="Terrain"
+          subtitle="Coming soon — SF VC event calendar, who's attending, field notes and follow-ups."
         />
       )}
     </div>
@@ -235,7 +235,7 @@ function OutreachTab() {
   return (
     <section className="outreach-wrap">
       <div className="outreach-header">
-        <h1>Outreach · San Francisco</h1>
+        <h1>Network · San Francisco</h1>
         <div className="header-actions">
           <div className="view-toggle">
             {['Table', 'Pipeline'].map((mode) => (
