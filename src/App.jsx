@@ -112,11 +112,89 @@ function PlaceholderTab({ title, subtitle }) {
   )
 }
 
+function TerrainCalendar({ events, calendarMonth, setCalendarMonth }) {
+  const { year, month } = calendarMonth
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
+
+  const firstDay = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+  // Group Going/Maybe events by date
+  const eventsByDate = {}
+  for (const ev of events) {
+    if (!ev.date || ev.status === 'Pass') continue
+    if (!eventsByDate[ev.date]) eventsByDate[ev.date] = []
+    eventsByDate[ev.date].push(ev)
+  }
+
+  const cells = []
+  for (let i = 0; i < firstDay; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  const today = new Date()
+  const todayStr = today.toISOString().slice(0, 10)
+
+  function prevMonth() {
+    setCalendarMonth(({ year: y, month: m }) =>
+      m === 0 ? { year: y - 1, month: 11 } : { year: y, month: m - 1 }
+    )
+  }
+  function nextMonth() {
+    setCalendarMonth(({ year: y, month: m }) =>
+      m === 11 ? { year: y + 1, month: 0 } : { year: y, month: m + 1 }
+    )
+  }
+
+  return (
+    <div className="terrain-calendar">
+      <div className="cal-header">
+        <button className="cal-nav" onClick={prevMonth} type="button">‹</button>
+        <span className="cal-month-label">{MONTH_NAMES[month]} {year}</span>
+        <button className="cal-nav" onClick={nextMonth} type="button">›</button>
+      </div>
+      <div className="cal-grid">
+        {DAYS.map(d => <div key={d} className="cal-day-name">{d}</div>)}
+        {cells.map((day, idx) => {
+          if (!day) return <div key={`empty-${idx}`} className="cal-cell cal-empty" />
+          const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
+          const dayEvents = eventsByDate[dateStr] || []
+          const isToday = dateStr === todayStr
+          return (
+            <div key={dateStr} className={`cal-cell${isToday ? ' cal-today' : ''}`}>
+              <span className="cal-day-num">{day}</span>
+              <div className="cal-events">
+                {dayEvents.map(ev => (
+                  <div
+                    key={ev.id}
+                    className={`cal-event-pill cal-event-${ev.status?.toLowerCase()}`}
+                    title={`${ev.name}${ev.location ? ' · ' + ev.location.split(' • ').slice(1).join('') : ''}`}
+                  >
+                    {ev.name.length > 22 ? ev.name.slice(0, 22) + '…' : ev.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <div className="cal-legend">
+        <span className="cal-legend-item"><span className="cal-dot cal-dot-going" /> Going</span>
+        <span className="cal-legend-item"><span className="cal-dot cal-dot-maybe" /> Maybe</span>
+      </div>
+    </div>
+  )
+}
+
 function TerrainTab() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('All')
+  const [viewMode, setViewMode] = useState('List')
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const d = new Date(); return { year: d.getFullYear(), month: d.getMonth() }
+  })
   const [expandedIds, setExpandedIds] = useState([])
   const [goalEditing, setGoalEditing] = useState({})
   const [eventModalOpen, setEventModalOpen] = useState(false)
@@ -350,6 +428,16 @@ function TerrainTab() {
             {value}
           </button>
         ))}
+        <div className="view-toggle" style={{ marginLeft: 'auto' }}>
+          {['List', 'Calendar'].map(v => (
+            <button
+              key={v}
+              className={`filter-pill ${viewMode === v ? 'active' : ''}`}
+              onClick={() => setViewMode(v)}
+              type="button"
+            >{v}</button>
+          ))}
+        </div>
       </div>
 
       {flashMessage && <div className="flash-message">{flashMessage}</div>}
@@ -360,6 +448,12 @@ function TerrainTab() {
         <div className="state-card error">{error}</div>
       ) : filteredEvents.length === 0 ? (
         <div className="state-card">No events yet. Add your first one.</div>
+      ) : viewMode === 'Calendar' ? (
+        <TerrainCalendar
+          events={events}
+          calendarMonth={calendarMonth}
+          setCalendarMonth={setCalendarMonth}
+        />
       ) : (
         <div className="terrain-list">
           {upcomingEvents.map((terrainEvent) => (
