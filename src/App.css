@@ -1062,3 +1062,150 @@ tbody tr:last-child td {
 .cal-dot-going { background: #1a1a1a; }
 .cal-dot-maybe { background: #f5e6c0; border: 1px solid #e8d090; }
 .view-toggle { display: flex; gap: 4px; }
+
+/* ── Intel Tab ─────────────────────────────────────────── */
+.intel-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 24px;
+}
+
+.intel-search {
+  border: 1px solid #e8e8e5;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  width: 220px;
+}
+
+.intel-search:focus {
+  outline: none;
+  border-color: #aaa;
+}
+
+.intel-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.intel-stat-total {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-right: 6px;
+}
+
+.intel-stat-num {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.intel-stat-label {
+  color: #666;
+  font-size: 12px;
+}
+
+.intel-cat-pill {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.intel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.intel-card {
+  background: #fff;
+  border: 1px solid #e8e8e5;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.intel-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.intel-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.intel-card-actions .btn {
+  padding: 5px 9px;
+  font-size: 11px;
+}
+
+.intel-cat-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  display: inline-block;
+  margin-bottom: 5px;
+}
+
+.intel-card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.intel-card-summary {
+  margin: 0;
+  color: #444;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.intel-expand-btn {
+  border: none;
+  background: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 2px;
+  text-decoration: underline;
+}
+
+.intel-card-source {
+  font-size: 11px;
+  color: #888;
+  border-top: 1px solid #f0f0ed;
+  padding-top: 6px;
+}
+
+.intel-card-date {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.intel-empty {
+  color: #888;
+  padding: 40px 0;
+  text-align: center;
+}
+
+/* Category colors */
+.intel-cat-ai    { background: #e8f0ff; color: #2550c0; }
+.intel-cat-consumer { background: #fff0e8; color: #b84000; }
+.intel-cat-fintech  { background: #e8fff0; color: #006030; }
+.intel-cat-vc       { background: #f4f0ff; color: #6030b8; }
+.intel-cat-product  { background: #fff8e8; color: #885000; }
+.intel-cat-general  { background: #f4f4f1; color: #555; }

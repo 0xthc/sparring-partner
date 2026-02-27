@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { supabase } from './supabase'
 
-const TABS = ['Precognition', 'Flow', 'Network', 'Terrain']
+const TABS = ['Precognition', 'Flow', 'Network', 'Terrain', 'Intel']
 const STATUS_ORDER = ['To reach', 'Reached out', 'Replied', 'Meeting', 'Following up', 'Pass']
 const ALL_FILTERS = ['All', ...STATUS_ORDER]
 const STAGE_OPTIONS = ['Pre-seed', 'Seed', 'Series A', 'Growth']
@@ -59,6 +59,15 @@ const initialFieldNoteForm = {
   notes: '',
 }
 
+const INTEL_CATEGORIES = ['AI Infra', 'Consumer', 'Fintech', 'VC Mechanics', 'Product', 'General']
+
+const initialIntelForm = {
+  title: '',
+  category: 'General',
+  summary: '',
+  source: '',
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState('Precognition')
 
@@ -89,6 +98,7 @@ function App() {
         />
       )}
       {activeTab === 'Terrain' && <TerrainTab />}
+      {activeTab === 'Intel' && <IntelTab />}
     </div>
   )
 }
@@ -1945,6 +1955,223 @@ function daysSince(dateString) {
   const then = new Date(dateString)
   const diff = now.getTime() - then.getTime()
   return Math.floor(diff / (1000 * 60 * 60 * 24))
+}
+
+function intelCategoryClass(category) {
+  if (category === 'AI Infra') return 'intel-cat-ai'
+  if (category === 'Consumer') return 'intel-cat-consumer'
+  if (category === 'Fintech') return 'intel-cat-fintech'
+  if (category === 'VC Mechanics') return 'intel-cat-vc'
+  if (category === 'Product') return 'intel-cat-product'
+  return 'intel-cat-general'
+}
+
+function IntelTab() {
+  const [entries, setEntries] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('All')
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [form, setForm] = useState(initialIntelForm)
+  const [expandedIds, setExpandedIds] = useState([])
+  const [flashMessage, setFlashMessage] = useState('')
+
+  useEffect(() => { fetchEntries() }, [])
+
+  useEffect(() => {
+    if (!flashMessage) return undefined
+    const timer = setTimeout(() => setFlashMessage(''), 2500)
+    return () => clearTimeout(timer)
+  }, [flashMessage])
+
+  async function fetchEntries() {
+    setLoading(true)
+    const { data, error: err } = await supabase
+      .from('intel')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (err) { setError(err.message); setLoading(false); return }
+    setEntries(data || [])
+    setLoading(false)
+  }
+
+  function openAdd() {
+    setForm(initialIntelForm)
+    setEditingId(null)
+    setModalOpen(true)
+  }
+
+  function openEdit(entry) {
+    setForm({ title: entry.title, category: entry.category, summary: entry.summary || '', source: entry.source || '' })
+    setEditingId(entry.id)
+    setModalOpen(true)
+  }
+
+  function closeModal() {
+    setModalOpen(false)
+    setEditingId(null)
+  }
+
+  async function handleSave() {
+    if (!form.title.trim()) return
+    const payload = { title: form.title.trim(), category: form.category, summary: form.summary, source: form.source }
+    let err
+    if (editingId) {
+      const res = await supabase.from('intel').update(payload).eq('id', editingId)
+      err = res.error
+    } else {
+      const res = await supabase.from('intel').insert(payload)
+      err = res.error
+    }
+    if (err) { setError(err.message); return }
+    closeModal()
+    fetchEntries()
+    setFlashMessage(editingId ? 'Entry updated.' : 'Entry saved.')
+  }
+
+  async function handleDelete(id) {
+    await supabase.from('intel').delete().eq('id', id)
+    setEntries(prev => prev.filter(e => e.id !== id))
+    setFlashMessage('Entry removed.')
+  }
+
+  function toggleExpand(id) {
+    setExpandedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+
+  const filtered = entries.filter(e => {
+    const matchCat = categoryFilter === 'All' || e.category === categoryFilter
+    const matchSearch = !search || e.title.toLowerCase().includes(search.toLowerCase()) || (e.summary || '').toLowerCase().includes(search.toLowerCase())
+    return matchCat && matchSearch
+  })
+
+  const counts = INTEL_CATEGORIES.reduce((acc, c) => {
+    acc[c] = entries.filter(e => e.category === c).length
+    return acc
+  }, {})
+
+  return (
+    <div className="intel-wrap">
+      {flashMessage && <div className="flash-message">{flashMessage}</div>}
+
+      <div className="outreach-header">
+        <h1>Intel</h1>
+        <div className="header-actions">
+          <input
+            className="intel-search"
+            type="text"
+            placeholder="Search..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <button className="btn btn-dark" onClick={openAdd} type="button">+ Add entry</button>
+        </div>
+      </div>
+
+      <div className="intel-stats-row">
+        <div className="intel-stat-total">
+          <span className="intel-stat-num">{entries.length}</span>
+          <span className="intel-stat-label">total entries</span>
+        </div>
+        {INTEL_CATEGORIES.map(cat => counts[cat] > 0 && (
+          <span key={cat} className={`intel-cat-pill ${intelCategoryClass(cat)}`}>
+            {cat} · {counts[cat]}
+          </span>
+        ))}
+      </div>
+
+      <div className="filter-row">
+        {['All', ...INTEL_CATEGORIES].map(cat => (
+          <button
+            key={cat}
+            className={`filter-btn ${categoryFilter === cat ? 'active' : ''}`}
+            onClick={() => setCategoryFilter(cat)}
+            type="button"
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {loading && <p className="intel-empty">Loading...</p>}
+      {error && <p className="intel-empty" style={{ color: '#a03030' }}>{error}</p>}
+      {!loading && !error && filtered.length === 0 && (
+        <p className="intel-empty">{search || categoryFilter !== 'All' ? 'No entries match.' : 'No entries yet. Add your first.'}</p>
+      )}
+
+      <div className="intel-grid">
+        {filtered.map(entry => {
+          const expanded = expandedIds.includes(entry.id)
+          const isLong = (entry.summary || '').length > 200
+          return (
+            <div key={entry.id} className="intel-card">
+              <div className="intel-card-header">
+                <div>
+                  <span className={`intel-cat-badge ${intelCategoryClass(entry.category)}`}>{entry.category}</span>
+                  <h3 className="intel-card-title">{entry.title}</h3>
+                </div>
+                <div className="intel-card-actions">
+                  <button className="btn btn-light" onClick={() => openEdit(entry)} type="button">Edit</button>
+                  <button className="btn btn-danger" onClick={() => handleDelete(entry.id)} type="button">Delete</button>
+                </div>
+              </div>
+              {entry.summary && (
+                <p className="intel-card-summary">
+                  {isLong && !expanded ? entry.summary.slice(0, 200) + '…' : entry.summary}
+                  {isLong && (
+                    <button className="intel-expand-btn" onClick={() => toggleExpand(entry.id)} type="button">
+                      {expanded ? ' less' : ' more'}
+                    </button>
+                  )}
+                </p>
+              )}
+              {entry.source && (
+                <div className="intel-card-source">Source: {entry.source}</div>
+              )}
+              <div className="intel-card-date">{new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+            </div>
+          )
+        })}
+      </div>
+
+      {modalOpen && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">{editingId ? 'Edit entry' : 'New Intel entry'}</h2>
+              <button className="modal-close" onClick={closeModal} type="button">✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-row">
+                <label className="form-label">Title</label>
+                <input className="form-input" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. AI Agent Latency Reduction" />
+              </div>
+              <div className="form-row">
+                <label className="form-label">Category</label>
+                <select className="form-input" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
+                  {INTEL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="form-row">
+                <label className="form-label">Summary</label>
+                <textarea className="form-input form-textarea" rows={5} value={form.summary} onChange={e => setForm(f => ({ ...f, summary: e.target.value }))} placeholder="Plain English explanation..." />
+              </div>
+              <div className="form-row">
+                <label className="form-label">Source</label>
+                <input className="form-input" value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))} placeholder="e.g. Christopher Acker, Caffeine & Capital, Feb 27" />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-light" onClick={closeModal} type="button">Cancel</button>
+              <button className="btn btn-dark" onClick={handleSave} type="button">{editingId ? 'Update' : 'Save'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default App
