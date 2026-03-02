@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { supabase } from './supabase'
+import { HUSTLE_PORTFOLIO } from './hustlePortfolio'
 
 const TABS = ['Precognition', 'Flow', 'Network', 'Terrain', 'Intel']
 const STATUS_ORDER = ['To reach', 'Reached out', 'Replied', 'Meeting', 'Following up', 'Pass']
@@ -91,12 +92,7 @@ function App() {
 
       {activeTab === 'Precognition' && <PrecognitionTab />}
       {activeTab === 'Network' && <OutreachTab />}
-      {activeTab === 'Flow' && (
-        <PlaceholderTab
-          title="Flow"
-          subtitle="Coming soon — fund portfolio tracking, investment signals, sector heat maps."
-        />
-      )}
+      {activeTab === 'Flow' && <FlowTab />}
       {activeTab === 'Terrain' && <TerrainTab />}
       {activeTab === 'Intel' && <IntelTab />}
     </div>
@@ -110,6 +106,154 @@ function PrecognitionTab() {
       src="https://0xthc.github.io/yc-scout/"
       title="Precognition"
     />
+  )
+}
+
+// ── Vertical style map ───────────────────────────────────────────
+const V_STYLES = {
+  'Fintech':       { bg: '#e8f4fd', color: '#1565c0', border: '#bbdefb' },
+  'AI/ML':         { bg: '#f3e5f5', color: '#7b1fa2', border: '#e1bee7' },
+  'Digital Health':{ bg: '#e8f5e9', color: '#2e7d32', border: '#c8e6c9' },
+  'SaaS':          { bg: '#fff8e1', color: '#f57f17', border: '#ffecb3' },
+  'Enterprise':    { bg: '#fce4ec', color: '#c2185b', border: '#f8bbd0' },
+  'Consumer':      { bg: '#fff3e0', color: '#bf5000', border: '#ffe0b2' },
+  'Education':     { bg: '#e0f2f1', color: '#00695c', border: '#b2dfdb' },
+  'Hardware':      { bg: '#efebe9', color: '#4e342e', border: '#d7ccc8' },
+  'Media':         { bg: '#e8eaf6', color: '#3949ab', border: '#c5cae9' },
+  'Sustainability':{ bg: '#f1f8e9', color: '#558b2f', border: '#dcedc8' },
+  'Other':         { bg: '#f4f4f4', color: '#555',    border: '#ddd'    },
+}
+
+const FUNDS = [
+  { key: 'hustle', name: 'Hustle Fund', stage: 'Pre-seed', focus: 'Global · All verticals', data: HUSTLE_PORTFOLIO },
+]
+
+function FlowTab() {
+  const [activeFund, setActiveFund] = useState('hustle')
+  const [activeVertical, setActiveVertical] = useState('All')
+  const [search, setSearch] = useState('')
+
+  const fund = FUNDS.find(f => f.key === activeFund)
+  const allCompanies = useMemo(() => fund.data.flatMap(g => g.companies), [fund])
+
+  const verticals = useMemo(() => {
+    return [
+      { vertical: 'All', companies: allCompanies },
+      ...fund.data,
+    ]
+  }, [fund, allCompanies])
+
+  const visible = useMemo(() => {
+    const base = activeVertical === 'All' ? allCompanies : (fund.data.find(g => g.vertical === activeVertical)?.companies || [])
+    if (!search.trim()) return base
+    const q = search.toLowerCase()
+    return base.filter(c => c.name.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q))
+  }, [activeVertical, allCompanies, fund.data, search])
+
+  return (
+    <section style={{ padding: '24px 24px', maxWidth: 1100, margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>Flow</h1>
+        <p style={{ margin: '4px 0 0', fontSize: 12, color: '#888' }}>Fund portfolios by vertical — reference layer for deal sourcing</p>
+      </div>
+
+      {/* Fund selector */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 10, color: '#888', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Fund</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {FUNDS.map(f => {
+            const active = activeFund === f.key
+            return (
+              <button key={f.key} onClick={() => { setActiveFund(f.key); setActiveVertical('All') }} style={{
+                padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                border: active ? '1.5px solid #1a1a1a' : '1px solid #e0e0dc',
+                background: active ? '#1a1a1a' : '#fff',
+                color: active ? '#fff' : '#444',
+              }}>
+                {f.name}
+                <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, opacity: 0.7 }}>{f.stage}</span>
+              </button>
+            )
+          })}
+          <div style={{ display: 'flex', alignItems: 'center', marginLeft: 4, fontSize: 11, color: '#aaa', fontStyle: 'italic' }}>
+            + more funds coming
+          </div>
+        </div>
+        <div style={{ marginTop: 5, fontSize: 11, color: '#aaa' }}>{fund.focus} · {allCompanies.length} companies</div>
+      </div>
+
+      {/* Vertical breakdown cards */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+        {verticals.map(g => {
+          const vs = V_STYLES[g.vertical] || V_STYLES['Other']
+          const active = activeVertical === g.vertical
+          return (
+            <button key={g.vertical} onClick={() => setActiveVertical(g.vertical)} style={{
+              padding: '7px 13px', borderRadius: 10, cursor: 'pointer', textAlign: 'left',
+              border: active ? `1.5px solid ${vs.color}` : `1px solid ${vs.border}`,
+              background: active ? vs.bg : '#fff',
+              transition: 'all 0.12s',
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: active ? vs.color : '#444' }}>{g.vertical}</div>
+              <div style={{ fontSize: 10, color: active ? vs.color : '#999', marginTop: 1 }}>{g.companies.length}</div>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Search */}
+      <div style={{ marginBottom: 16 }}>
+        <input
+          value={search} onChange={e => setSearch(e.target.value)}
+          placeholder={`Search ${activeVertical === 'All' ? 'all companies' : activeVertical + ' companies'}…`}
+          style={{
+            width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #e0e0dc',
+            background: '#fff', fontSize: 12, color: '#1a1a1a', outline: 'none',
+          }}
+        />
+      </div>
+
+      {/* Results count */}
+      <div style={{ fontSize: 11, color: '#999', marginBottom: 12 }}>
+        <strong style={{ color: '#444' }}>{visible.length}</strong> companies
+        {activeVertical !== 'All' && <span style={{ marginLeft: 4, ...{ color: V_STYLES[activeVertical]?.color } }}>· {activeVertical}</span>}
+        {search && <span style={{ marginLeft: 4 }}>matching "{search}"</span>}
+      </div>
+
+      {/* Company grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+        gap: 10,
+      }}>
+        {visible.map((c, i) => {
+          const vs = V_STYLES[c.vertical] || V_STYLES['Other']
+          return (
+            <a key={i} href={c.url || '#'} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+              <div style={{
+                background: '#fff', borderRadius: 10, padding: '12px 14px',
+                border: '1px solid #e8e8e5', cursor: 'pointer',
+                transition: 'box-shadow 0.12s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 5 }}>
+                  <div style={{ fontWeight: 600, fontSize: 12, color: '#1a1a1a', lineHeight: 1.3 }}>{c.name}</div>
+                  <span style={{
+                    fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 20, flexShrink: 0, marginLeft: 6,
+                    background: vs.bg, color: vs.color,
+                  }}>{c.vertical}</span>
+                </div>
+                <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5, marginBottom: 7 }}>{c.desc}</div>
+                <div style={{ fontSize: 10, color: '#aaa' }}>{c.geo}</div>
+              </div>
+            </a>
+          )
+        })}
+      </div>
+    </section>
   )
 }
 
