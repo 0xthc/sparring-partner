@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { supabase } from './supabase'
 import { HUSTLE_PORTFOLIO } from './hustlePortfolio'
+import { CONVICTION_PORTFOLIO } from './convictionPortfolio'
+import { FIRST_ROUND_PORTFOLIO } from './firstRoundPortfolio'
+import { PRECURSOR_PORTFOLIO } from './precursorPortfolio'
+import { SPC_PORTFOLIO } from './spcPortfolio'
+import { OMNI_PORTFOLIO } from './omniPortfolio'
 
 const TABS = ['Precognition', 'Flow', 'Network', 'Terrain', 'Intel']
 const STATUS_ORDER = ['To reach', 'Reached out', 'Replied', 'Meeting', 'Following up', 'Pass']
@@ -125,37 +130,67 @@ const V_STYLES = {
 }
 
 const FUNDS = [
-  { key: 'hustle', name: 'Hustle Fund', stage: 'Pre-seed', focus: 'Global · All verticals', data: HUSTLE_PORTFOLIO },
+  { key: 'hustle',      name: 'Hustle Fund',   stage: 'Pre-seed',    focus: 'Global · All verticals',              data: HUSTLE_PORTFOLIO },
+  { key: 'conviction',  name: 'Conviction',    stage: 'Seed–A',      focus: 'SF · AI-first',                       data: CONVICTION_PORTFOLIO },
+  { key: 'firstround',  name: 'First Round',   stage: 'Seed',        focus: 'SF/NY · All verticals',               data: FIRST_ROUND_PORTFOLIO },
+  { key: 'precursor',   name: 'Precursor',     stage: 'Pre-seed',    focus: 'SF · Underrepresented founders',       data: PRECURSOR_PORTFOLIO },
+  { key: 'spc',         name: 'SPC',           stage: 'Exploration', focus: 'SF · Community-first',                data: SPC_PORTFOLIO },
+  { key: 'omni',        name: 'Omni',          stage: 'Seed',        focus: 'SF · Consumer + AI',                  data: OMNI_PORTFOLIO },
 ]
+
+const THEMES = ['AI Native', 'AI Infra', 'Dev Tools', 'Consumer AI', 'D2C Consumer', 'Future of Work', 'Fintech', 'Health & Longevity', 'Deep Tech']
+const THEME_STYLES = {
+  'AI Native':          { color: '#6366f1', bg: '#f0f0ff', border: '#ddd8ff' },
+  'AI Infra':           { color: '#7c3aed', bg: '#f5f0ff', border: '#e0d4ff' },
+  'Dev Tools':          { color: '#0284c7', bg: '#f0f8ff', border: '#bae0fd' },
+  'Consumer AI':        { color: '#db2777', bg: '#fdf2f8', border: '#fbcfe8' },
+  'D2C Consumer':       { color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+  'Future of Work':     { color: '#059669', bg: '#f0fdf4', border: '#bbf7d0' },
+  'Fintech':            { color: '#0891b2', bg: '#f0fdfa', border: '#a5f3fc' },
+  'Health & Longevity': { color: '#16a34a', bg: '#f0fdf4', border: '#86efac' },
+  'Deep Tech':          { color: '#64748b', bg: '#f8fafc', border: '#cbd5e1' },
+}
 
 function FlowTab() {
   const [activeFund, setActiveFund] = useState('hustle')
   const [activeVertical, setActiveVertical] = useState('All')
+  const [activeTheme, setActiveTheme] = useState('All')
+  const [viewMode, setViewMode] = useState('vertical') // 'vertical' | 'thematic'
   const [search, setSearch] = useState('')
 
   const fund = FUNDS.find(f => f.key === activeFund)
   const allCompanies = useMemo(() => fund.data.flatMap(g => g.companies), [fund])
 
-  const verticals = useMemo(() => {
+  const verticals = useMemo(() => [
+    { vertical: 'All', companies: allCompanies },
+    ...fund.data,
+  ], [fund, allCompanies])
+
+  const thematicGroups = useMemo(() => {
     return [
-      { vertical: 'All', companies: allCompanies },
-      ...fund.data,
+      { theme: 'All', companies: allCompanies },
+      ...THEMES.map(t => ({ theme: t, companies: allCompanies.filter(c => c.theme === t) })).filter(g => g.companies.length > 0),
     ]
-  }, [fund, allCompanies])
+  }, [allCompanies])
 
   const visible = useMemo(() => {
-    const base = activeVertical === 'All' ? allCompanies : (fund.data.find(g => g.vertical === activeVertical)?.companies || [])
+    let base
+    if (viewMode === 'thematic') {
+      base = activeTheme === 'All' ? allCompanies : allCompanies.filter(c => c.theme === activeTheme)
+    } else {
+      base = activeVertical === 'All' ? allCompanies : (fund.data.find(g => g.vertical === activeVertical)?.companies || [])
+    }
     if (!search.trim()) return base
     const q = search.toLowerCase()
     return base.filter(c => c.name.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q))
-  }, [activeVertical, allCompanies, fund.data, search])
+  }, [viewMode, activeVertical, activeTheme, allCompanies, fund.data, search])
 
   return (
     <section style={{ padding: '24px 24px', maxWidth: 1100, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>Flow</h1>
-        <p style={{ margin: '4px 0 0', fontSize: 12, color: '#888' }}>Fund portfolios by vertical — reference layer for deal sourcing</p>
+        <p style={{ margin: '4px 0 0', fontSize: 12, color: '#888' }}>Fund portfolios — reference layer for deal sourcing and pattern recognition</p>
       </div>
 
       {/* Fund selector */}
@@ -165,7 +200,7 @@ function FlowTab() {
           {FUNDS.map(f => {
             const active = activeFund === f.key
             return (
-              <button key={f.key} onClick={() => { setActiveFund(f.key); setActiveVertical('All') }} style={{
+              <button key={f.key} onClick={() => { setActiveFund(f.key); setActiveVertical('All'); setActiveTheme('All') }} style={{
                 padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 border: active ? '1.5px solid #1a1a1a' : '1px solid #e0e0dc',
                 background: active ? '#1a1a1a' : '#fff',
@@ -176,16 +211,27 @@ function FlowTab() {
               </button>
             )
           })}
-          <div style={{ display: 'flex', alignItems: 'center', marginLeft: 4, fontSize: 11, color: '#aaa', fontStyle: 'italic' }}>
-            + more funds coming
-          </div>
         </div>
         <div style={{ marginTop: 5, fontSize: 11, color: '#aaa' }}>{fund.focus} · {allCompanies.length} companies</div>
       </div>
 
-      {/* Vertical breakdown cards */}
+      {/* View mode toggle */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 14 }}>
+        {['vertical', 'thematic'].map(mode => (
+          <button key={mode} onClick={() => { setViewMode(mode); setActiveVertical('All'); setActiveTheme('All') }} style={{
+            padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+            border: viewMode === mode ? '1.5px solid #1a1a1a' : '1px solid #e0e0dc',
+            background: viewMode === mode ? '#1a1a1a' : '#f8f8f6',
+            color: viewMode === mode ? '#fff' : '#666',
+          }}>
+            {mode === 'vertical' ? 'By Vertical' : 'By Thematic'}
+          </button>
+        ))}
+      </div>
+
+      {/* Filter pills — vertical or thematic */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-        {verticals.map(g => {
+        {viewMode === 'vertical' ? verticals.map(g => {
           const vs = V_STYLES[g.vertical] || V_STYLES['Other']
           const active = activeVertical === g.vertical
           return (
@@ -199,6 +245,20 @@ function FlowTab() {
               <div style={{ fontSize: 10, color: active ? vs.color : '#999', marginTop: 1 }}>{g.companies.length}</div>
             </button>
           )
+        }) : thematicGroups.map(g => {
+          const ts = THEME_STYLES[g.theme] || { color: '#888', bg: '#f5f5f5', border: '#e0e0dc' }
+          const active = activeTheme === g.theme
+          return (
+            <button key={g.theme} onClick={() => setActiveTheme(g.theme)} style={{
+              padding: '7px 13px', borderRadius: 10, cursor: 'pointer', textAlign: 'left',
+              border: active ? `1.5px solid ${ts.color}` : `1px solid ${ts.border}`,
+              background: active ? ts.bg : '#fff',
+              transition: 'all 0.12s',
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: active ? ts.color : '#444' }}>{g.theme}</div>
+              <div style={{ fontSize: 10, color: active ? ts.color : '#999', marginTop: 1 }}>{g.companies.length}</div>
+            </button>
+          )
         })}
       </div>
 
@@ -206,7 +266,7 @@ function FlowTab() {
       <div style={{ marginBottom: 16 }}>
         <input
           value={search} onChange={e => setSearch(e.target.value)}
-          placeholder={`Search ${activeVertical === 'All' ? 'all companies' : activeVertical + ' companies'}…`}
+          placeholder={`Search companies…`}
           style={{
             width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #e0e0dc',
             background: '#fff', fontSize: 12, color: '#1a1a1a', outline: 'none',
@@ -217,7 +277,8 @@ function FlowTab() {
       {/* Results count */}
       <div style={{ fontSize: 11, color: '#999', marginBottom: 12 }}>
         <strong style={{ color: '#444' }}>{visible.length}</strong> companies
-        {activeVertical !== 'All' && <span style={{ marginLeft: 4, ...{ color: V_STYLES[activeVertical]?.color } }}>· {activeVertical}</span>}
+        {viewMode === 'vertical' && activeVertical !== 'All' && <span style={{ marginLeft: 4, color: V_STYLES[activeVertical]?.color }}>· {activeVertical}</span>}
+        {viewMode === 'thematic' && activeTheme !== 'All' && <span style={{ marginLeft: 4, color: THEME_STYLES[activeTheme]?.color }}>· {activeTheme}</span>}
         {search && <span style={{ marginLeft: 4 }}>matching "{search}"</span>}
       </div>
 
@@ -247,7 +308,11 @@ function FlowTab() {
                   }}>{c.vertical}</span>
                 </div>
                 <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5, marginBottom: 7 }}>{c.desc}</div>
-                <div style={{ fontSize: 10, color: '#aaa' }}>{c.geo}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 10, color: '#aaa' }}>{c.geo}</span>
+                  {c.theme && (() => { const ts = THEME_STYLES[c.theme] || {}; return (
+                    <span style={{ fontSize: 9, fontWeight: 700, color: ts.color || '#888', background: ts.bg || '#f5f5f5', border: `1px solid ${ts.border || '#e0e0dc'}`, borderRadius: 4, padding: '1px 5px', letterSpacing: '0.03em' }}>{c.theme}</span>
+                  )})()}</div>
               </div>
             </a>
           )
