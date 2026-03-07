@@ -130,12 +130,40 @@ const V_STYLES = {
 }
 
 const FUNDS = [
-  { key: 'hustle',      name: 'Hustle Fund',   stage: 'Pre-seed',    focus: 'Global · All verticals',              data: HUSTLE_PORTFOLIO },
-  { key: 'conviction',  name: 'Conviction',    stage: 'Seed–A',      focus: 'SF · AI-first',                       data: CONVICTION_PORTFOLIO },
-  { key: 'firstround',  name: 'First Round',   stage: 'Seed',        focus: 'SF/NY · All verticals',               data: FIRST_ROUND_PORTFOLIO },
-  { key: 'precursor',   name: 'Precursor',     stage: 'Pre-seed',    focus: 'SF · Underrepresented founders',       data: PRECURSOR_PORTFOLIO },
-  { key: 'spc',         name: 'SPC',           stage: 'Exploration', focus: 'SF · Community-first',                data: SPC_PORTFOLIO },
-  { key: 'omni',        name: 'Omni',          stage: 'Seed',        focus: 'SF · Consumer + AI',                  data: OMNI_PORTFOLIO },
+  { key: 'hustle', name: 'Hustle Fund', stage: 'Pre-seed', focus: 'Global · All verticals', data: HUSTLE_PORTFOLIO,
+    partners: [
+      { name: 'Elizabeth Yin', role: 'GP', focus: 'Pre-revenue founders, execution velocity, global', thesis: 'Bets on founder speed over pedigree. Execution velocity is the only signal that matters pre-traction.', notable: ['Hustle Fund portfolio worldwide'], twitter: 'elizabethyin' },
+    ]
+  },
+  { key: 'conviction', name: 'Conviction', stage: 'Seed–A', focus: 'SF · AI-first', data: CONVICTION_PORTFOLIO,
+    partners: [
+      { name: 'Sarah Guo', role: 'GP', focus: 'AI-native companies, foundation model applications', thesis: 'Every industry will be rebuilt by AI. Backs companies where AI is the product, not a feature.', notable: ['Harvey', 'ElevenLabs', 'Perplexity', 'Cursor', 'Cognition'], twitter: 'saranormous' },
+    ]
+  },
+  { key: 'firstround', name: 'First Round', stage: 'Seed', focus: 'SF/NY · All verticals', data: FIRST_ROUND_PORTFOLIO,
+    partners: [
+      { name: 'Josh Kopelman', role: 'Founding Partner', focus: 'Consumer, marketplace, fintech', thesis: 'Backs companies at the earliest possible moment — often before the market knows the category exists.', notable: ['Notion', 'Pomelo Care', 'Loyal', 'Upstart'], twitter: 'jkopelman' },
+      { name: 'Brett Berson', role: 'Partner', focus: 'Enterprise, GTM, AI for sales', thesis: 'Deep operator empathy — writes extensively on building sales orgs and go-to-market strategy.', notable: ['Clay', 'Highspot'], twitter: 'brettberson' },
+      { name: 'Todd Jackson', role: 'Partner', focus: 'AI infrastructure, developer tools', thesis: 'Backs picks-and-shovels companies for the AI era — infra that every AI company will need.', notable: ['Fal.ai', 'Vercel'], twitter: 'toddjackson' },
+      { name: 'Meka Asonye', role: 'Partner', focus: 'Deep tech, hardware, defense', thesis: 'One of the few seed investors going deep into hard tech and defense-adjacent companies.', notable: ['K2 Space'], twitter: 'mekaasonye' },
+    ]
+  },
+  { key: 'precursor', name: 'Precursor', stage: 'Pre-seed', focus: 'SF · Underrepresented founders', data: PRECURSOR_PORTFOLIO,
+    partners: [
+      { name: 'Charles Hudson', role: 'GP', focus: 'Pre-product, underrepresented founders, diverse markets', thesis: 'Funds ideas and people before there is a product. Most pre-conviction fund in SF. Strong belief that the best founders come from non-traditional paths.', notable: ['Caribou', 'Affinity', 'Luminary'], twitter: 'charleshudson' },
+    ]
+  },
+  { key: 'spc', name: 'SPC', stage: 'Exploration', focus: 'SF · Community-first', data: SPC_PORTFOLIO,
+    partners: [
+      { name: 'Shriram Bhashyam', role: 'Co-founder', focus: 'Community-driven exploration, early-stage bets', thesis: 'SPC is a community for people exploring new ideas — not a traditional fund. Backs companies before they have a clear category.', notable: ['Figma', 'Scale AI', 'Deel', 'Coda'], twitter: 'shriram' },
+      { name: 'Ruchi Sanghvi', role: 'Co-founder', focus: 'Network effects, platform businesses', thesis: 'Former VP Engineering at Dropbox, first female engineer at Facebook. Backs founders building enduring platforms.', notable: ['Lattice', 'Pika Labs', 'Luma AI'], twitter: 'ruchi' },
+    ]
+  },
+  { key: 'omni', name: 'Omni', stage: 'Seed', focus: 'SF · Consumer + AI', data: OMNI_PORTFOLIO,
+    partners: [
+      { name: 'Omni Team', role: 'Partners', focus: 'Consumer brands, D2C, AI-native products', thesis: 'Backs the next generation of consumer brands and the AI tools that power them. Strong consumer thesis with community distribution.', notable: ['Partiful', 'Olipop', 'Cometeer', 'Jeeves'], twitter: '' },
+    ]
+  },
 ]
 
 const THEMES = ['AI Native', 'AI Infra', 'Dev Tools', 'Consumer AI', 'D2C Consumer', 'Future of Work', 'Fintech', 'Health & Longevity', 'Deep Tech']
@@ -155,7 +183,7 @@ function FlowTab() {
   const [activeFund, setActiveFund] = useState('hustle')
   const [activeVertical, setActiveVertical] = useState('All')
   const [activeTheme, setActiveTheme] = useState('All')
-  const [viewMode, setViewMode] = useState('vertical') // 'vertical' | 'thematic'
+  const [viewMode, setViewMode] = useState('vertical') // 'vertical' | 'thematic' | 'partners'
   const [search, setSearch] = useState('')
 
   const fund = FUNDS.find(f => f.key === activeFund)
@@ -217,20 +245,52 @@ function FlowTab() {
 
       {/* View mode toggle */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 14 }}>
-        {['vertical', 'thematic'].map(mode => (
+        {[['vertical', 'By Vertical'], ['thematic', 'By Thematic'], ['partners', 'Partners']].map(([mode, label]) => (
           <button key={mode} onClick={() => { setViewMode(mode); setActiveVertical('All'); setActiveTheme('All') }} style={{
             padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
             border: viewMode === mode ? '1.5px solid #1a1a1a' : '1px solid #e0e0dc',
             background: viewMode === mode ? '#1a1a1a' : '#f8f8f6',
             color: viewMode === mode ? '#fff' : '#666',
-          }}>
-            {mode === 'vertical' ? 'By Vertical' : 'By Thematic'}
-          </button>
+          }}>{label}</button>
         ))}
       </div>
 
+      {/* Partners view */}
+      {viewMode === 'partners' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {(fund.partners || []).map((p, i) => (
+            <div key={i} style={{ background: '#fff', border: '1px solid #e0e0dc', borderRadius: 12, padding: '18px 20px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>{p.name}</div>
+                  <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{p.role} · {fund.name}</div>
+                </div>
+                {p.twitter && (
+                  <a href={`https://twitter.com/${p.twitter}`} target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: 11, color: '#1a1a1a', textDecoration: 'none', fontWeight: 600, background: '#f5f5f3', padding: '4px 10px', borderRadius: 6, border: '1px solid #e0e0dc' }}>
+                    @{p.twitter}
+                  </a>
+                )}
+              </div>
+              <div style={{ fontSize: 12, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>{p.thesis}</div>
+              <div style={{ fontSize: 10, color: '#888', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Focus</div>
+              <div style={{ fontSize: 12, color: '#444', marginBottom: 12 }}>{p.focus}</div>
+              <div style={{ fontSize: 10, color: '#888', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Notable bets</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {p.notable.map((n, j) => (
+                  <span key={j} style={{ fontSize: 11, fontWeight: 600, background: '#f5f5f3', border: '1px solid #e0e0dc', borderRadius: 6, padding: '3px 9px', color: '#333' }}>{n}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+          {(!fund.partners || fund.partners.length === 0) && (
+            <div style={{ fontSize: 12, color: '#aaa', padding: '20px 0' }}>No partner data yet for this fund.</div>
+          )}
+        </div>
+      )}
+
       {/* Filter pills — vertical or thematic */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+      {viewMode !== 'partners' && <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
         {viewMode === 'vertical' ? verticals.map(g => {
           const vs = V_STYLES[g.vertical] || V_STYLES['Other']
           const active = activeVertical === g.vertical
@@ -260,10 +320,10 @@ function FlowTab() {
             </button>
           )
         })}
-      </div>
+      </div>}
 
-      {/* Search */}
-      <div style={{ marginBottom: 16 }}>
+      {/* Search + company grid — hidden in partners mode */}
+      {viewMode !== 'partners' && <div style={{ marginBottom: 16 }}>
         <input
           value={search} onChange={e => setSearch(e.target.value)}
           placeholder={`Search companies…`}
@@ -272,18 +332,19 @@ function FlowTab() {
             background: '#fff', fontSize: 12, color: '#1a1a1a', outline: 'none',
           }}
         />
-      </div>
+      </div>}
 
       {/* Results count */}
+      {viewMode !== 'partners' &&
       <div style={{ fontSize: 11, color: '#999', marginBottom: 12 }}>
         <strong style={{ color: '#444' }}>{visible.length}</strong> companies
         {viewMode === 'vertical' && activeVertical !== 'All' && <span style={{ marginLeft: 4, color: V_STYLES[activeVertical]?.color }}>· {activeVertical}</span>}
         {viewMode === 'thematic' && activeTheme !== 'All' && <span style={{ marginLeft: 4, color: THEME_STYLES[activeTheme]?.color }}>· {activeTheme}</span>}
         {search && <span style={{ marginLeft: 4 }}>matching "{search}"</span>}
-      </div>
+      </div>}
 
       {/* Company grid */}
-      <div style={{
+      {viewMode !== 'partners' && <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
         gap: 10,
@@ -317,7 +378,7 @@ function FlowTab() {
             </a>
           )
         })}
-      </div>
+      </div>}
     </section>
   )
 }
