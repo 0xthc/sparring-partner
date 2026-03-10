@@ -8,7 +8,7 @@ import { PRECURSOR_PORTFOLIO } from './precursorPortfolio'
 import { SPC_PORTFOLIO } from './spcPortfolio'
 import { OMNI_PORTFOLIO } from './omniPortfolio'
 
-const TABS = ['Precognition', 'Prism', 'Flow', 'Network', 'Terrain', 'Intel']
+const TABS = ['Precognition', 'Flow', 'Network', 'Terrain', 'Intel']
 const STATUS_ORDER = ['To reach', 'Reached out', 'Replied', 'Meeting', 'Following up', 'Pass']
 const ALL_FILTERS = ['All', ...STATUS_ORDER]
 const STAGE_OPTIONS = ['Pre-seed', 'Seed', 'Series A', 'Growth']
@@ -96,7 +96,6 @@ function App() {
       </nav>
 
       {activeTab === 'Precognition' && <PrecognitionTab />}
-      {activeTab === 'Prism' && <PrismTab />}
       {activeTab === 'Network' && <OutreachTab />}
       {activeTab === 'Flow' && <FlowTab />}
       {activeTab === 'Terrain' && <TerrainTab />}
@@ -111,16 +110,6 @@ function PrecognitionTab() {
       className="precog-iframe"
       src="https://0xthc.github.io/yc-scout/"
       title="Precognition"
-    />
-  )
-}
-
-function PrismTab() {
-  return (
-    <iframe
-      className="precog-iframe"
-      src="https://0xthc.github.io/prism/"
-      title="Prism"
     />
   )
 }
